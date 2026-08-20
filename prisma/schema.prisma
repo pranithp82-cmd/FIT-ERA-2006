@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  age           Int?
+  heightCm      Float?
+  weightKg      Float?
+  location      String?
+  trainerSync   Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  healthReports HealthReport[]
+  dxaReports    DXAReport[]
+  foodLogs      FoodLog[]
+  workouts      Workout[]
+  waterLogs     WaterLog[]
+  healthMetrics HealthMetric[]
+  conversations AIConversation[]
+}
+
+model HealthReport {
+  id           String           @id @default(uuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportDate   DateTime
+  uploadDate   DateTime         @default(now())
+  laboratory   String?
+  packageId    String?
+  fileUrl      String?
+  
+  parameters   BloodParameter[]
+}
+
+model BloodParameter {
+  id             String       @id @default(uuid())
+  reportId       String
+  report         HealthReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  testName       String
+  value          Float
+  unit           String
+  referenceLow   Float?
+  referenceHigh  Float?
+  referenceText  String?
+  status         String       // "NORMAL", "LOW", "HIGH", "ATTENTION"
+  category       String
+  source         String       @default("OCR_EXTRACTED") // "OCR_EXTRACTED", "MANUAL_ENTRY", "VERIFIED"
+}
+
+model DXAReport {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportDate   DateTime
+  uploadDate   DateTime       @default(now())
+  scanTypeId   String?
+  fileUrl      String?
+  
+  parameters   DXAParameter[]
+}
+
+model DXAParameter {
+  id             String       @id @default(uuid())
+  reportId       String
+  report         DXAReport    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  metricName     String       // e.g., "Body Fat", "Lean Mass", "BMD", "T-Score"
+  value          Float
+  unit           String?
+  region         String?      // e.g., "Total", "Arms", "Legs", "Trunk"
+}
+
+model Food {
+  id          String    @id @default(uuid())
+  foodId      String?   @unique
+  name        String
+  category    String    @default("General")
+  servingSize String    @default("100 g/ml")
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float     @default(0)
+  sugar       Float     @default(0)
+  sodium      Float     @default(0)
+  calcium     Float     @default(0)
+  iron        Float     @default(0)
+  vitaminC    Float     @default(0)
+  vitaminA    Float     @default(0)
+  vegetarian  Boolean   @default(true)
+  vegan       Boolean   @default(false)
+  dataType    String    @default("PROTOTYPE_ESTIMATE")
+  sourceNote  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  
+  foodLogs    FoodLog[]
+
+  @@index([name])
+  @@index([category])
+  @@index([vegetarian])
+  @@index([vegan])
+  @@index([foodId])
+}
+
+model FoodLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id])
+  mealType  String   // "Breakfast", "Lunch", "Dinner", "Snack"
+  quantity  Float
+  logDate   DateTime @default(now())
+}
+
+model Exercise {
+  id          String    @id @default(uuid())
+  name        String
+  category    String    // e.g., "Chest", "Legs"
+  
+  workouts    WorkoutSet[]
+}
+
+model Workout {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  startTime   DateTime     @default(now())
+  endTime     DateTime?
+  durationMin Int?
+  
+  sets        WorkoutSet[]
+}
+
+model WorkoutSet {
+  id          String   @id @default(uuid())
+  workoutId   String
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+  setNumber   Int
+  reps        Int
+  weight      Float
+  completed   Boolean  @default(false)
+}
+
+model WaterLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountMl  Int
+  logDate   DateTime @default(now())
+}
+
+model HealthMetric {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  metric    String   // "Weight", "BodyFat"
+  value     Float
+  date      DateTime @default(now())
+}
+
+model AIConversation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // "user", "assistant"
+  content   String
+  timestamp DateTime @default(now())
+}
