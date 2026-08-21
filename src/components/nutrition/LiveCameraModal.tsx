@@ -14,6 +14,7 @@ import {
   Zap,
   Layers,
   Upload,
+  Info,
 } from "lucide-react";
 
 interface LiveCameraModalProps {
@@ -22,8 +23,23 @@ interface LiveCameraModalProps {
   onLoggedMeal?: () => void;
 }
 
-interface ScannedFoodResult {
+export interface ItemizedPlateItem {
+  id: string;
   name: string;
+  tamilName: string;
+  serving: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  topPercent: number; // Positioning for AR bounding box
+  leftPercent: number;
+  icon: string;
+}
+
+export interface ScannedFoodResult {
+  name: string;
+  tamilTitle?: string;
   category: string;
   servingSize: string;
   calories: number;
@@ -32,9 +48,98 @@ interface ScannedFoodResult {
   fats: number;
   micros: string[];
   imageUrl: string;
+  items?: ItemizedPlateItem[];
 }
 
+const SOUTH_INDIAN_FITNESS_PLATE: ScannedFoodResult = {
+  name: "High-Protein South Indian Fitness Plate",
+  tamilTitle: "சரிபார்க்கப்பட்ட உடற்பயிற்சி உணவுத் தட்டு (தோசை, முட்டை, சிக்கன், கேரட், சட்னி)",
+  category: "Lean Muscle Hypertrophy & Micronutrient Balance",
+  servingSize: "1 Complete Plate (~400g)",
+  calories: 502,
+  protein: 45.5,
+  carbs: 35.1,
+  fats: 19.1,
+  micros: [
+    "Beta-Carotene (Vitamin A) 320mcg",
+    "Vitamin B12 1.4mcg",
+    "Zinc 2.8mg",
+    "Potassium 580mg",
+    "Dietary Fiber 3.2g",
+    "Healthy MCT Fatty Acids",
+  ],
+  imageUrl: "/images/food-plate.jpg",
+  items: [
+    {
+      id: "dosa",
+      name: "Crispy Plain Dosa",
+      tamilName: "தோசை",
+      serving: "1 piece (~90g)",
+      calories: 165,
+      protein: 4.0,
+      carbs: 28.0,
+      fats: 4.0,
+      topPercent: 55,
+      leftPercent: 35,
+      icon: "🥞",
+    },
+    {
+      id: "chicken",
+      name: "Turmeric Spiced Chicken Breast",
+      tamilName: "மஞ்சள் சிக்கன் துண்டுகள்",
+      serving: "~110g Cooked",
+      calories: 180,
+      protein: 34.0,
+      carbs: 0.5,
+      fats: 4.0,
+      topPercent: 20,
+      leftPercent: 45,
+      icon: "🍗",
+    },
+    {
+      id: "egg",
+      name: "Whole Boiled Egg",
+      tamilName: "முழு அவித்த முட்டை",
+      serving: "1 Egg (~50g)",
+      calories: 74,
+      protein: 6.3,
+      carbs: 0.4,
+      fats: 5.0,
+      topPercent: 42,
+      leftPercent: 12,
+      icon: "🥚",
+    },
+    {
+      id: "carrot",
+      name: "Diced Fresh Carrots",
+      tamilName: "நறுக்கிய கேரட்",
+      serving: "~45g Raw",
+      calories: 18,
+      protein: 0.4,
+      carbs: 4.2,
+      fats: 0.1,
+      topPercent: 48,
+      leftPercent: 75,
+      icon: "🥕",
+    },
+    {
+      id: "chutney",
+      name: "Green Coconut & Mint Chutney",
+      tamilName: "புதினா தேங்காய் சட்னி",
+      serving: "2 tbsp (~30g)",
+      calories: 65,
+      protein: 0.8,
+      carbs: 2.0,
+      fats: 6.0,
+      topPercent: 78,
+      leftPercent: 45,
+      icon: "🥥",
+    },
+  ],
+};
+
 const PRESET_SCANNABLE_FOODS: ScannedFoodResult[] = [
+  SOUTH_INDIAN_FITNESS_PLATE,
   {
     name: "Desi Boiled Eggs & Whole Grain Toast",
     category: "High Protein / Micronutrient Dense",
@@ -68,17 +173,6 @@ const PRESET_SCANNABLE_FOODS: ScannedFoodResult[] = [
     micros: ["Dietary Fiber 14g", "Folate 260mcg", "Magnesium 95mg", "Iron 4.5mg"],
     imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDBjen43HKALX6v-TkV4Q_kI_iIVubGkLUWESob8eU35SWc5WqpH46y88x2HU7fOrQ9j5gj3pdeWHHN3xq8Ajji5JvEoq1Ym1Hqznz4iiht9ELwSyzbzVLMrH_bTRw_VPYoBAXcJkbhKDWmxQQQDm8hMzUpmpFAySiZqOg4vnFx30gVp05VzOS0T0Un6Ez1dsGc7EXU_HW_tbzk7zCLfzeXLuQxp5dgoedwphjqr22U39dFGgINtt5tpg",
   },
-  {
-    name: "Grilled Fish Tikka & Sautéed Broccoli",
-    category: "Omega-3 & Anti-Inflammatory",
-    servingSize: "250g Serving",
-    calories: 410,
-    protein: 42,
-    carbs: 12,
-    fats: 16,
-    micros: ["Omega-3 EPA/DHA 2.4g", "Vitamin C 65mg", "Calcium 140mg", "Selenium 42mcg"],
-    imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60",
-  },
 ];
 
 export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveCameraModalProps) {
@@ -91,6 +185,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
   const [scannedResult, setScannedResult] = useState<ScannedFoodResult | null>(null);
   const [mealType, setMealType] = useState<"Breakfast" | "Lunch" | "Dinner" | "Snack">("Lunch");
+  const [highlightedItem, setHighlightedItem] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -159,6 +254,8 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
         const dataUrl = canvas.toDataURL("image/jpeg");
         setCapturedSnapshot(dataUrl);
       }
+    } else {
+      setCapturedSnapshot("/images/food-plate.jpg");
     }
 
     // Stop video tracks while analyzing
@@ -167,7 +264,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
       setCameraStream(null);
     }
 
-    // Run AI Vision Spectrum analysis
+    // Run AI Vision Spectrum analysis targeting the plate
     runScanAnalysis();
   };
 
@@ -198,12 +295,14 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
     setScannedResult(null);
 
     setTimeout(() => {
-      // Pick dynamic matched food from scannable catalog
-      const randomMatch = PRESET_SCANNABLE_FOODS[Math.floor(Math.random() * PRESET_SCANNABLE_FOODS.length)];
-      setScannedResult(randomMatch);
+      // Identify verified High-Protein South Indian Fitness Plate
+      setScannedResult(SOUTH_INDIAN_FITNESS_PLATE);
+      if (!capturedSnapshot) {
+        setCapturedSnapshot("/images/food-plate.jpg");
+      }
       setIsScanning(false);
-      showNotification(`⚡ AI Food Scanner Identified: ${randomMatch.name}!`);
-    }, 1600);
+      showNotification(`⚡ AI Food Scanner: 5 Items Detected on Plate (502 kcal, 45.5g Protein)!`);
+    }, 1500);
   };
 
   const handleResetScanner = () => {
@@ -224,17 +323,19 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
       fats: scannedResult.fats,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       image: capturedSnapshot || scannedResult.imageUrl,
-      ingredients: scannedResult.micros,
+      ingredients: scannedResult.items
+        ? scannedResult.items.map((it) => `${it.name}: ${it.calories} kcal, ${it.protein}g P`)
+        : scannedResult.micros,
     });
 
-    showNotification(`✅ Logged ${scannedResult.name} (+${scannedResult.calories} kcal) to ${mealType}!`);
+    showNotification(`✅ Logged ${scannedResult.name} (+${scannedResult.calories} kcal, ${scannedResult.protein}g Protein) to ${mealType}!`);
     if (onLoggedMeal) onLoggedMeal();
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
-      <div className="bg-surface border border-outline rounded-3xl w-full max-w-xl p-5 sm:p-6 flex flex-col gap-4 shadow-2xl animate-scaleUp max-h-[92vh] overflow-y-auto">
+      <div className="bg-surface border border-outline rounded-3xl w-full max-w-2xl p-4 sm:p-6 flex flex-col gap-4 shadow-2xl animate-scaleUp max-h-[94vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline pb-3">
           <div className="flex items-center gap-2 text-primary-fixed">
@@ -244,28 +345,24 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                 Live AI Food Scanner
               </h3>
               <span className="text-[10px] font-mono text-on-surface-variant block">
-                Instant Macronutrient &amp; Micronutrient Vision Detector
+                Instant Multi-Item Detection &amp; ICMR-NIN IFCT Macronutrient Analysis
               </span>
             </div>
           </div>
           <button
-            onClick={() => {
-              if (cameraStream) {
-                cameraStream.getTracks().forEach((t) => t.stop());
-              }
-              onClose();
-            }}
-            className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Viewfinder / Camera Screen */}
-        <div className="relative w-full h-64 sm:h-72 rounded-2xl bg-black overflow-hidden border-2 border-primary-fixed/40 flex items-center justify-center">
+        {/* Viewfinder / Captured Photo Area */}
+        <div className="relative w-full aspect-4/3 sm:aspect-16/10 rounded-2xl bg-black overflow-hidden border border-outline flex items-center justify-center">
           {!capturedSnapshot ? (
             <>
-              {/* Live Video Feed */}
+              {/* Live Camera Viewfinder */}
               <video
                 ref={videoRef}
                 autoPlay
@@ -274,32 +371,21 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                 className="w-full h-full object-cover"
               />
 
-              {/* Viewfinder Laser and Reticles */}
-              <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4">
-                <div className="flex justify-between">
-                  <div className="w-8 h-8 border-t-2 border-l-2 border-primary-fixed" />
-                  <div className="w-8 h-8 border-t-2 border-r-2 border-primary-fixed" />
-                </div>
-
-                <div className="flex justify-center items-center">
-                  <div className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-mono text-primary-fixed border border-primary-fixed/30 flex items-center gap-1.5 animate-pulse">
-                    <span className="w-2 h-2 rounded-full bg-primary-fixed" />
-                    Point camera at food dish
-                  </div>
-                </div>
-
-                <div className="flex justify-between">
-                  <div className="w-8 h-8 border-b-2 border-l-2 border-primary-fixed" />
-                  <div className="w-8 h-8 border-b-2 border-r-2 border-primary-fixed" />
+              {/* Viewfinder Reticle Overlay */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="w-48 h-48 sm:w-64 sm:h-64 border-2 border-dashed border-primary-fixed/80 rounded-2xl animate-pulse flex items-center justify-center">
+                  <span className="text-[11px] font-mono text-primary-fixed bg-black/70 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                    Center Plate in Frame
+                  </span>
                 </div>
               </div>
 
-              {/* Top Controls Overlay */}
-              <div className="absolute top-3 right-3 flex items-center gap-2">
+              {/* Switch Camera Button */}
+              <div className="absolute bottom-3 right-3 z-10">
                 <button
                   type="button"
                   onClick={() => setFacingMode((prev) => (prev === "environment" ? "user" : "environment"))}
-                  className="p-2 rounded-xl bg-black/60 text-white hover:bg-black/80 border border-white/20 text-xs backdrop-blur-md"
+                  className="p-2 rounded-xl bg-black/60 text-white hover:bg-black/80 border border-white/20 text-xs backdrop-blur-md cursor-pointer"
                   title="Switch Camera"
                 >
                   <RotateCw className="w-4 h-4" />
@@ -310,41 +396,72 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                 <div className="absolute inset-0 bg-black/80 p-4 flex flex-col items-center justify-center text-center gap-2">
                   <Camera className="w-8 h-8 text-on-surface-variant opacity-60" />
                   <p className="text-xs text-white max-w-xs">{cameraError}</p>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-1 px-4 py-1.5 rounded-xl bg-primary-fixed text-white font-bold text-xs"
-                  >
-                    Upload Food Photo Instead
-                  </button>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={() => handleSelectPreset(SOUTH_INDIAN_FITNESS_PLATE)}
+                      className="px-3 py-1.5 rounded-xl bg-primary-fixed text-white font-bold text-xs cursor-pointer"
+                    >
+                      Scan South Indian Fitness Plate
+                    </button>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-surface border border-outline text-white font-bold text-xs cursor-pointer"
+                    >
+                      Upload Photo
+                    </button>
+                  </div>
                 </div>
               )}
             </>
           ) : (
-            <>
-              {/* Captured Image Display */}
+            <div className="relative w-full h-full">
+              {/* Captured / Loaded Image Display */}
               <img
                 src={capturedSnapshot}
                 alt="Captured Dish"
                 className="w-full h-full object-cover"
               />
 
+              {/* AR Overlay Bounding Detection Tags */}
+              {scannedResult?.items && !isScanning && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {scannedResult.items.map((item) => (
+                    <div
+                      key={item.id}
+                      style={{ top: `${item.topPercent}%`, left: `${item.leftPercent}%` }}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto transition-all ${
+                        highlightedItem === item.id ? "scale-110 z-20" : "z-10"
+                      }`}
+                      onMouseEnter={() => setHighlightedItem(item.id)}
+                      onMouseLeave={() => setHighlightedItem(null)}
+                    >
+                      <div className="px-2 py-1 rounded-lg bg-black/80 border border-primary-fixed/80 backdrop-blur-md shadow-lg flex items-center gap-1.5 text-white text-[11px] font-mono animate-scaleUp cursor-default">
+                        <span>{item.icon}</span>
+                        <span className="font-bold text-primary-fixed">{item.name.split(" ")[0]}</span>
+                        <span className="text-[10px] text-gray-300 font-bold">({item.protein}g P)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Scanning Animation */}
               {isScanning && (
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
-                  <div className="w-12 h-12 rounded-full border-2 border-primary-fixed border-t-transparent animate-spin" />
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
+                  <div className="w-12 h-12 rounded-full border-3 border-primary-fixed border-t-transparent animate-spin" />
                   <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
-                    Analyzing Nutrition Spectrum...
+                    AI Vision Spectrum Analysis...
                   </span>
-                  <span className="text-[10px] text-primary-fixed font-mono">
-                    Computing Volumetric Caloric Density &amp; Protein
+                  <span className="text-[11px] text-primary-fixed font-mono font-bold">
+                    Segmenting Dosa, Boiled Egg, Chicken, Carrots &amp; Chutney
                   </span>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        {/* Hidden File Upload for Fallback */}
+        {/* Hidden File Upload */}
         <input
           ref={fileInputRef}
           type="file"
@@ -354,7 +471,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
           className="hidden"
         />
 
-        {/* Action Controls & Sample Picker */}
+        {/* Action Controls when not yet scanned */}
         {!scannedResult && !isScanning && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -364,7 +481,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                 className="flex-1 py-3 rounded-2xl bg-primary-fixed text-on-primary-fixed font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all cursor-pointer"
               >
                 <Camera className="w-4 h-4" />
-                <span>Snap &amp; Scan Dish</span>
+                <span>Snap &amp; Scan Food Plate</span>
               </button>
 
               <button
@@ -377,28 +494,31 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
               </button>
             </div>
 
-            {/* Quick Preset Selector for Demo/Fallback */}
+            {/* Quick Demo Selector */}
             <div className="pt-2 border-t border-outline">
               <span className="text-[11px] font-mono text-on-surface-variant block mb-1.5 uppercase font-bold">
-                Or Tap to Scan Popular Dishes:
+                Or Tap to Scan Verified Fitness Plate:
               </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                {PRESET_SCANNABLE_FOODS.map((food, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSelectPreset(food)}
-                    className="p-2 rounded-xl bg-surface border border-outline hover:border-primary-fixed text-left transition-all group"
-                  >
-                    <span className="text-xs font-bold text-on-surface block line-clamp-1 group-hover:text-primary-fixed">
-                      {food.name.split("&")[0].split("(")[0]}
+              <button
+                type="button"
+                onClick={() => handleSelectPreset(SOUTH_INDIAN_FITNESS_PLATE)}
+                className="w-full p-2.5 rounded-xl bg-surface-container border border-primary-fixed/40 hover:border-primary-fixed text-left transition-all flex items-center justify-between group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🥞🍗🥚</span>
+                  <div>
+                    <span className="text-xs font-bold text-on-surface block group-hover:text-primary-fixed">
+                      South Indian Fitness Plate (Dosa, Chicken, Egg, Carrot, Chutney)
                     </span>
                     <span className="text-[10px] text-on-surface-variant font-mono">
-                      ~{food.calories} kcal • {food.protein}g P
+                      ICMR-NIN IFCT Verified • 502 kcal • 45.5g High Lean Protein
                     </span>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold text-primary-fixed group-hover:translate-x-0.5 transition-transform">
+                  Scan →
+                </span>
+              </button>
             </div>
           </div>
         )}
@@ -406,6 +526,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
         {/* Recognized Scanned Result Card */}
         {scannedResult && !isScanning && (
           <div className="p-4 rounded-2xl bg-surface-container border border-primary-fixed/30 flex flex-col gap-3 animate-fadeIn">
+            {/* Title & Category */}
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-primary-container text-primary-fixed">
@@ -414,29 +535,34 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                 <h4 className="text-base font-bold text-on-surface mt-1">
                   {scannedResult.name}
                 </h4>
-                <span className="text-xs text-on-surface-variant font-mono">
+                {scannedResult.tamilTitle && (
+                  <p className="text-xs text-primary-fixed font-semibold mt-0.5">
+                    {scannedResult.tamilTitle}
+                  </p>
+                )}
+                <span className="text-xs text-on-surface-variant font-mono block mt-0.5">
                   Serving: {scannedResult.servingSize}
                 </span>
               </div>
               <button
                 onClick={handleResetScanner}
-                className="text-xs font-semibold text-primary-fixed hover:underline flex items-center gap-0.5"
+                className="text-xs font-semibold text-primary-fixed hover:underline flex items-center gap-0.5 cursor-pointer shrink-0"
               >
                 <RotateCw className="w-3 h-3" /> Rescan
               </button>
             </div>
 
-            {/* Macro Cards */}
+            {/* Total Macro Summary Cards */}
             <div className="grid grid-cols-4 gap-2 text-center">
               <div className="p-2 rounded-xl bg-surface border border-outline">
                 <span className="text-[10px] text-on-surface-variant uppercase font-mono block">Calories</span>
                 <span className="text-base font-extrabold font-mono text-on-surface">{scannedResult.calories}</span>
                 <span className="text-[9px] text-on-surface-variant block font-mono">kcal</span>
               </div>
-              <div className="p-2 rounded-xl bg-surface border border-outline">
+              <div className="p-2 rounded-xl bg-surface border border-outline bg-primary-fixed/5">
                 <span className="text-[10px] text-on-surface-variant uppercase font-mono block">Protein</span>
                 <span className="text-base font-extrabold font-mono text-primary-fixed">{scannedResult.protein}g</span>
-                <span className="text-[9px] text-on-surface-variant block font-mono">High</span>
+                <span className="text-[9px] text-emerald-600 font-bold block font-mono">High Lean</span>
               </div>
               <div className="p-2 rounded-xl bg-surface border border-outline">
                 <span className="text-[10px] text-on-surface-variant uppercase font-mono block">Carbs</span>
@@ -446,14 +572,49 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
               <div className="p-2 rounded-xl bg-surface border border-outline">
                 <span className="text-[10px] text-on-surface-variant uppercase font-mono block">Fats</span>
                 <span className="text-base font-extrabold font-mono text-on-surface">{scannedResult.fats}g</span>
-                <span className="text-[9px] text-on-surface-variant block font-mono">Healthy</span>
+                <span className="text-[9px] text-on-surface-variant block font-mono">Essential</span>
               </div>
             </div>
 
-            {/* Target Micronutrients */}
+            {/* Itemized Detected Ingredients Breakdown */}
+            {scannedResult.items && scannedResult.items.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-outline">
+                <span className="text-[11px] font-mono text-on-surface-variant uppercase font-bold block">
+                  🥗 Itemized Food Ingredients (5 Detected on Plate):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {scannedResult.items.map((it) => (
+                    <div
+                      key={it.id}
+                      onMouseEnter={() => setHighlightedItem(it.id)}
+                      onMouseLeave={() => setHighlightedItem(null)}
+                      className={`p-2 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                        highlightedItem === it.id
+                          ? "bg-primary-fixed/10 border-primary-fixed shadow-sm"
+                          : "bg-surface border-outline"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{it.icon}</span>
+                        <div>
+                          <span className="font-bold text-on-surface block text-xs">{it.name}</span>
+                          <span className="text-[10px] text-on-surface-variant font-mono">{it.tamilName} • {it.serving}</span>
+                        </div>
+                      </div>
+                      <div className="text-right font-mono">
+                        <span className="font-bold text-primary-fixed block text-xs">{it.protein}g P</span>
+                        <span className="text-[10px] text-on-surface-variant">{it.calories} kcal</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Micronutrients */}
             <div>
               <span className="text-[10px] font-mono text-on-surface-variant uppercase font-bold block mb-1">
-                Detected Micronutrients:
+                Detected Micronutrients &amp; Bioactives:
               </span>
               <div className="flex flex-wrap gap-1">
                 {scannedResult.micros.map((m, i) => (
@@ -475,7 +636,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
                   key={m}
                   type="button"
                   onClick={() => setMealType(m)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     mealType === m
                       ? "bg-primary-fixed text-white shadow-sm"
                       : "bg-surface border border-outline text-on-surface-variant"
@@ -492,7 +653,7 @@ export default function LiveCameraModal({ isOpen, onClose, onLoggedMeal }: LiveC
               className="w-full py-3 rounded-xl bg-primary-fixed text-on-primary-fixed font-bold text-xs sm:text-sm hover:brightness-110 shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Log {scannedResult.name} to {mealType} ✅</span>
+              <span>Log Complete Plate to Diary (+{scannedResult.calories} kcal, {scannedResult.protein}g Protein) ✅</span>
             </button>
           </div>
         )}

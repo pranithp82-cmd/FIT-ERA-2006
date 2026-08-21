@@ -51,33 +51,33 @@ export default function FoodScanResultPage() {
       ? 2
       : customGrams / 350;
 
-  // Base nutritional values for standard 350g Chicken Rice bowl
+  // Base nutritional values for standard South Indian Fitness Plate (~400g)
   const baseNutrition = {
-    name: "Chicken Rice",
-    recipe: "Cooked, Standard Recipe",
-    calories: 520,
-    protein: 32,
-    carbs: 58,
-    fat: 18,
-    saturatedFat: 5,
+    name: "High-Protein South Indian Fitness Plate",
+    recipe: "Crispy Dosa, Boiled Egg, Chicken Breast, Diced Carrot & Chutney",
+    calories: 502,
+    protein: 45.5,
+    carbs: 35.1,
+    fat: 19.1,
+    saturatedFat: 4.8,
     transFat: 0,
-    cholesterol: 95,
-    fiber: 3,
-    sugar: 4,
-    sodium: 680,
-    potassium: 420,
-    calcium: 80,
-    iron: 3.2,
-    magnesium: 45,
+    cholesterol: 185,
+    fiber: 3.2,
+    sugar: 3.8,
+    sodium: 540,
+    potassium: 580,
+    calcium: 120,
+    iron: 3.8,
+    magnesium: 62,
     zinc: 2.8,
-    vitA: 120,
-    vitB6: 0.5,
-    vitB12: 1.8,
-    vitC: 8,
-    vitD: 0.7,
-    vitE: 1.5,
-    omega3: 0.3,
-    omega6: 2.1,
+    vitA: 320,
+    vitB6: 0.8,
+    vitB12: 1.4,
+    vitC: 12,
+    vitD: 1.2,
+    vitE: 2.1,
+    omega3: 0.4,
+    omega6: 2.8,
   };
 
   // Scaled nutritional values
@@ -88,24 +88,25 @@ export default function FoodScanResultPage() {
 
   const handleAddToDailyDiet = () => {
     logMeal({
-      name: `${baseNutrition.name} (${servingSize === "custom" ? `${customGrams}g` : servingSize === "1" ? "1 Bowl" : `${servingSize} Bowl`})`,
+      name: `${baseNutrition.name} (${servingSize === "custom" ? `${customGrams}g` : servingSize === "1" ? "1 Complete Plate" : `${servingSize} Plate`})`,
       mealType: mealType,
       calories: currentCalories,
       protein: currentProtein,
       carbs: currentCarbs,
       fats: currentFat,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      image: "https://lh3.googleusercontent.com/aida/AP1WRLt-UoP3aUmPWN9ZYOMSdFMb1N0uIFtIlfSK_HTCtr_BhlrxTvOaSpQihNg3ZcnIRNOvuA8We1p-bkP_uTUP4iQpWOo7IOO2smqmp1P6dbFUPDxF4IAtDAOxJa31Oef_YQb1bRq0dIxGXMfc2m62PQB0ZAViSDPI1Mh6JbgitY-ca5zL2CoYDhOIP9m8x418AfNGy-jfBeDjKk4PNcnWcKtqX4qwYHxy8OGGDi_3Db_rPj_XdrPOiEEEyqvc",
+      image: "/images/food-plate.jpg",
       ingredients: [
-        `Protein: ${currentProtein}g`,
-        `Carbs: ${currentCarbs}g`,
-        `Fat: ${currentFat}g`,
-        `Sodium: ${Math.round(baseNutrition.sodium * multiplier)}mg`,
+        `🍗 Chicken Breast: 34.0g Protein (180 kcal)`,
+        `🥚 Whole Boiled Egg: 6.3g Protein (74 kcal)`,
+        `🥞 Plain Dosa: 4.0g Protein (165 kcal)`,
+        `🥕 Diced Fresh Carrots: Beta-Carotene (18 kcal)`,
+        `🥥 Mint-Coconut Chutney: Healthy MCTs (65 kcal)`,
       ],
     });
 
     setIsLogged(true);
-    showNotification(`⚡ Logged ${baseNutrition.name} (${currentCalories} kcal) to ${mealType}!`);
+    showNotification(`⚡ Logged ${baseNutrition.name} (${currentCalories} kcal, ${currentProtein}g Protein) to ${mealType}!`);
   };
 
   const handleSimulateScan = () => {
@@ -160,8 +161,8 @@ export default function FoodScanResultPage() {
           <div className="h-64 w-full relative">
             <img
               className="object-cover w-full h-full absolute inset-0"
-              alt="A high-quality, professional food photography shot of a bowl of Chicken Rice"
-              src="https://lh3.googleusercontent.com/aida/AP1WRLt-UoP3aUmPWN9ZYOMSdFMb1N0uIFtIlfSK_HTCtr_BhlrxTvOaSpQihNg3ZcnIRNOvuA8We1p-bkP_uTUP4iQpWOo7IOO2smqmp1P6dbFUPDxF4IAtDAOxJa31Oef_YQb1bRq0dIxGXMfc2m62PQB0ZAViSDPI1Mh6JbgitY-ca5zL2CoYDhOIP9m8x418AfNGy-jfBeDjKk4PNcnWcKtqX4qwYHxy8OGGDi_3Db_rPj_XdrPOiEEEyqvc"
+              alt="High-Protein South Indian Fitness Plate (Dosa, Boiled Egg, Chicken, Carrot, Chutney)"
+              src="/images/food-plate.jpg"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
 
