@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
-import { detectLanguage, translateToEnglishSearchTerm, SupportedLanguage } from "@/lib/nutrition/translator";
+import prisma from "@/lib/prisma";
+import {
+  detectLanguage,
+  translateToEnglishSearchTerm,
+  extractCoreFoodName,
+  SupportedLanguage,
+} from "@/lib/nutrition/translator";
 import { parseFoodQuery } from "@/lib/nutrition/unit-converter";
 import { searchIFCTDatabase } from "@/lib/nutrition/ifct";
-import { queryUSDADatabase, CanonicalNutritionRecord } from "@/lib/nutrition/usda";
+import {
+  queryUSDADatabase,
+  USDA_OFFLINE_FOUNDATION,
+  CanonicalNutritionRecord,
+} from "@/lib/nutrition/usda";
 import { formatNutritionResponse } from "@/lib/nutrition/llm-formatter";
 
 export async function POST(req: Request) {
@@ -20,50 +30,94 @@ export async function POST(req: Request) {
     // 2. Unit & Serving Size Math Parsing
     const parsed = parseFoodQuery(rawQuery);
 
-    // 3. Translate native script terms to English search token
-    const englishSearchTerm = translateToEnglishSearchTerm(parsed.foodName);
+    // 3. Extract core food name and translate native script terms to English search token
+    let coreFoodName = extractCoreFoodName(parsed.foodName) || parsed.foodName;
+    if (!coreFoodName || coreFoodName.trim().length === 0) {
+      coreFoodName = "boiled egg";
+    }
+
+    const englishSearchTerm = translateToEnglishSearchTerm(coreFoodName);
 
     let canonicalRecord: CanonicalNutritionRecord | null = null;
 
-    // 4. Check IFCT Regional Database first for Indian / ethnic foods
-    const ifctMatch = searchIFCTDatabase(parsed.foodName) || searchIFCTDatabase(englishSearchTerm);
+    // 4. Check USDA Offline Foundation (instant zero-latency & high accuracy)
+    canonicalRecord =
+      USDA_OFFLINE_FOUNDATION[englishSearchTerm.toLowerCase()] ||
+      USDA_OFFLINE_FOUNDATION[coreFoodName.toLowerCase()] ||
+      null;
 
-    if (ifctMatch) {
-      canonicalRecord = {
-        id: ifctMatch.id,
-        foodName: ifctMatch.name,
-        dataType: "IFCT / ICMR-NIN",
-        source: ifctMatch.source,
-        isVerified: true,
-        per100g: {
-          calories: ifctMatch.per100g.calories,
-          protein: ifctMatch.per100g.protein,
-          carbs: ifctMatch.per100g.carbs,
-          fat: ifctMatch.per100g.fat,
-          fiber: ifctMatch.per100g.fiber,
-          sugar: null,
-          saturatedFat: ifctMatch.per100g.saturatedFat || null,
-          cholesterol: ifctMatch.per100g.cholesterol || null,
-          sodium: ifctMatch.per100g.sodium || null,
-          potassium: ifctMatch.per100g.potassium || null,
-          calcium: ifctMatch.per100g.calcium || null,
-          iron: ifctMatch.per100g.iron || null,
-          vitaminC: ifctMatch.per100g.vitaminC || null,
-          vitaminD: null,
-        },
-        healthBenefits: ifctMatch.healthBenefits,
-        warnings: ifctMatch.warnings,
-      };
-    } else {
-      // 5. Query USDA FoodData Central Database
+    // 5. Check IFCT Regional Database for Indian / ethnic foods
+    if (!canonicalRecord) {
+      const ifctMatch = searchIFCTDatabase(coreFoodName) || searchIFCTDatabase(englishSearchTerm);
+      if (ifctMatch) {
+        canonicalRecord = {
+          id: ifctMatch.id,
+          foodName: ifctMatch.name,
+          dataType: "IFCT / ICMR-NIN",
+          source: ifctMatch.source,
+          isVerified: true,
+          per100g: ifctMatch.per100g as any,
+          healthBenefits: ifctMatch.healthBenefits,
+          warnings: ifctMatch.warnings,
+        };
+      }
+    }
+
+    // 6. Check Prisma FIT ERA 5,000 Food Database
+    if (!canonicalRecord) {
+      try {
+        const dbFood = await prisma.food.findFirst({
+          where: {
+            OR: [
+              { name: { contains: coreFoodName } },
+              { name: { contains: englishSearchTerm } },
+              { name: { contains: parsed.foodName } },
+            ],
+          },
+        });
+
+        if (dbFood) {
+          canonicalRecord = {
+            id: dbFood.foodId || dbFood.id,
+            foodName: dbFood.name,
+            dataType: dbFood.dataType || "FIT ERA 5,000 Database",
+            source: `FIT ERA Database (${dbFood.category})`,
+            isVerified: true,
+            per100g: {
+              calories: dbFood.calories,
+              protein: dbFood.protein,
+              carbs: dbFood.carbs,
+              fat: dbFood.fat,
+              fiber: dbFood.fiber,
+              sugar: dbFood.sugar,
+              saturatedFat: null,
+              cholesterol: null,
+              sodium: dbFood.sodium,
+              potassium: null,
+              calcium: dbFood.calcium,
+              iron: dbFood.iron,
+              vitaminC: dbFood.vitaminC,
+              vitaminD: null,
+            },
+            healthBenefits: [
+              `${dbFood.name} provides ${dbFood.protein}g protein and ${dbFood.fiber}g fiber per ${dbFood.servingSize}.`,
+            ],
+            warnings: dbFood.sourceNote ? [dbFood.sourceNote] : undefined,
+          };
+        }
+      } catch (dbErr) {}
+    }
+
+    // 7. Query USDA FoodData Central Database
+    if (!canonicalRecord) {
       const usdaMatch = await queryUSDADatabase(englishSearchTerm);
       if (usdaMatch) {
         canonicalRecord = usdaMatch;
       } else {
-        // 6. Secondary Fallback: Estimated Composite (Marked explicitly as unverified)
+        // 8. Secondary Fallback: Estimated Composite (Marked explicitly as unverified)
         canonicalRecord = {
           id: `EST_${Date.now()}`,
-          foodName: parsed.foodName.charAt(0).toUpperCase() + parsed.foodName.slice(1),
+          foodName: coreFoodName.charAt(0).toUpperCase() + coreFoodName.slice(1),
           dataType: "Composite Estimate",
           source: "Estimated Composition (Unverified Database Entry)",
           isVerified: false,
@@ -93,7 +147,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 7. Format structured output with multi-language translation and serving math
+    // 9. Format structured output with multi-language translation and serving math
     const result = await formatNutritionResponse(parsed, canonicalRecord, detectedLang);
 
     return NextResponse.json(result);
