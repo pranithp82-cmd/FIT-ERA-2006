@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/context/AppContext";
 import {
   X,
@@ -37,6 +38,7 @@ interface RecommendedMealDetail {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const {
     user,
     dailyStats,
@@ -49,6 +51,10 @@ export default function DashboardPage() {
     toggleDailyPlanMeal,
     uploadDailyMealPhoto,
     hasBloodReport,
+    hasDxaReport,
+    activeWeakMuscles,
+    generateWeakMusclesFromDxa,
+    startWorkout,
     aiNutritionRecommendations,
     generateIndianRecommendationsFromBlood,
     assignedDietPlanFromMonitor,
@@ -686,6 +692,133 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SECTION 4: AI ASSESSMENT ENGINE: DEXA CORRECTIVE WORKOUTS                 */}
+          {/* ========================================================================= */}
+          <div
+            className="col-span-4 md:col-span-12 bg-surface rounded-2xl border-2 border-primary-fixed/20 p-md flex flex-col gap-md animate-slide-up shadow-sm"
+            style={{ animationDelay: "400ms" }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-outline pb-3">
+              <div className="flex flex-col gap-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-label-sm text-label-sm text-primary-fixed uppercase tracking-wider font-bold">
+                    AI Assessment Engine • DEXA Absorptiometry
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">
+                    3 Corrective Routines
+                  </span>
+                </div>
+                <h3 className="font-headline-md text-headline-md text-on-surface font-semibold">
+                  Customized Unilateral Asymmetry Workouts
+                </h3>
+                <span className="text-xs text-on-surface-variant">
+                  Generated from your Whole Body DXA scan to balance bilateral lean mass deficits and reinforce joint longevity.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!hasDxaReport && (
+                  <button
+                    type="button"
+                    onClick={() => generateWeakMusclesFromDxa()}
+                    className="px-3 py-1.5 rounded-lg bg-surface border border-outline text-xs font-mono text-primary-fixed hover:bg-surface-container transition-all cursor-pointer"
+                  >
+                    ⚡ Load DXA Asymmetry Matrix
+                  </button>
+                )}
+                <Link
+                  href="/workout-tracker"
+                  className="inline-flex items-center gap-1 text-xs font-mono text-primary-fixed font-bold hover:underline"
+                >
+                  <span>Full Workout Tracker →</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* 3 Corrective Workouts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {activeWeakMuscles && activeWeakMuscles.length > 0 ? (
+                activeWeakMuscles.map((protocol) => (
+                  <div
+                    key={protocol.id}
+                    className="p-4 rounded-xl bg-surface-container border border-outline flex flex-col justify-between gap-3 hover:border-primary-fixed/50 hover:shadow-sm transition-all"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                          protocol.severity === "high"
+                            ? "bg-red-500/10 text-red-600"
+                            : "bg-amber-500/10 text-amber-600"
+                        }`}>
+                          {protocol.severity === "high" ? "High Priority" : "Moderate Lag"}
+                        </span>
+                        <span className="text-[11px] font-mono text-primary-fixed font-bold">
+                          {protocol.deficitText.split(" ")[0]} Deficit
+                        </span>
+                      </div>
+
+                      <h4 className="font-bold text-sm text-on-surface">
+                        {protocol.simpleName}
+                      </h4>
+                      <span className="text-[11px] text-on-surface-variant font-mono">
+                        {protocol.deficitText}
+                      </span>
+
+                      <div className="space-y-1.5 pt-1.5 border-t border-outline/50">
+                        {protocol.exercises.map((ex, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs font-mono">
+                            <span className="text-on-surface truncate max-w-[180px]">{ex.name}</span>
+                            <span className="text-primary-fixed font-bold shrink-0">{ex.sets}×{ex.reps}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        startWorkout({
+                          id: `dxa_routine_${protocol.id}`,
+                          title: `DXA Corrective: ${protocol.simpleName}`,
+                          subtitle: `${protocol.deficitText} • Unilateral Overload`,
+                          category: "Hypertrophy",
+                          durationMinutes: 35,
+                          estimatedBurnKcal: 290,
+                          intensity: "High",
+                          targetMuscles: [protocol.simpleName, "Unilateral Symmetry"],
+                          exercises: protocol.exercises.map((ex: any, idx: number) => ({
+                            exerciseId: `ex_dxa_${idx}`,
+                            name: ex.name,
+                            targetSets: ex.sets || 3,
+                            targetReps: ex.reps || "10",
+                            restSeconds: ex.restSeconds || 60,
+                            sets: Array.from({ length: ex.sets || 3 }).map((_, sIdx) => ({
+                              setNumber: sIdx + 1,
+                              weightKg: ex.weightKg || 20,
+                              reps: parseInt((ex.reps || "10").split("-")[0]) || 10,
+                              completed: false,
+                            })),
+                          })),
+                        });
+                        router.push("/workout-tracker");
+                        showNotification(`🔥 Started AI Corrective Workout: ${protocol.simpleName}!`);
+                      }}
+                      className="w-full py-2 rounded-xl bg-primary-fixed text-white text-xs font-bold shadow-xs hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer mt-1"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                      <span>Start Corrective Workout</span>
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-6 text-on-surface-variant text-xs font-mono">
+                  Upload your DXA scan in Health &gt; DEXA Scanner to initialize customized corrective workout routines.
+                </div>
+              )}
             </div>
           </div>
         </div>
