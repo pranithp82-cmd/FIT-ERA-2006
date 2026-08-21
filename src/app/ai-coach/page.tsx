@@ -94,7 +94,6 @@ export default function AIChatPage() {
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
-        // Abort previous instance if any
         if (recognitionRef.current) {
           try {
             recognitionRef.current.abort();
@@ -102,7 +101,8 @@ export default function AIChatPage() {
         }
 
         const recognition = new SpeechRecognition();
-        recognition.continuous = true;
+        // On Android WebKit/Chrome, continuous mode often interrupts after 1 phrase; setting false gives reliable capture
+        recognition.continuous = false;
         recognition.interimResults = true;
         recognition.lang = voiceLang;
 
@@ -128,7 +128,6 @@ export default function AIChatPage() {
           speechAccumulatorRef.current = fullCaptured;
           setInputText(fullCaptured);
 
-          // Reset silence debounce timer: automatically finalize after 2.5s of silence
           if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = setTimeout(() => {
             const textToSend = speechAccumulatorRef.current.trim();
@@ -144,19 +143,28 @@ export default function AIChatPage() {
               setIsListening(false);
               handleSendMessage(textToSend);
             }
-          }, 2500);
+          }, 2000);
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error:", event.error);
-          if (event.error !== "no-speech") {
-            setIsListening(false);
-            if (isVoiceCallActive) setVoiceCallStatus("idle");
+          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+            showNotification("⚠️ Microphone permission is required. Please enable mic access in your Android/browser settings.");
+          } else if (event.error !== "no-speech") {
+            showNotification(`⚠️ Voice error (${event.error}). Please type your message.`);
           }
+          setIsListening(false);
+          if (isVoiceCallActive) setVoiceCallStatus("idle");
         };
 
         recognition.onend = () => {
           setIsListening(false);
+          // If text was gathered before onend, auto-dispatch
+          const captured = speechAccumulatorRef.current.trim();
+          if (captured && !isSendingRef.current) {
+            speechAccumulatorRef.current = "";
+            handleSendMessage(captured);
+          }
         };
 
         recognitionRef.current = recognition;
@@ -180,9 +188,13 @@ export default function AIChatPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Start / Stop Microphone Listening with Full Sentence Gathering
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
+  // Start / Stop Microphone Listening with Android Permission Check
+  const toggleListening = async () => {
+    const SpeechRecognition =
+      typeof window !== "undefined" &&
+      ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+    if (!SpeechRecognition) {
       showNotification("⚠️ Voice input is not supported in this browser. Please type your message.");
       return;
     }
@@ -192,7 +204,7 @@ export default function AIChatPage() {
     if (isListening) {
       // User tapped to finish: immediately send the gathered sentence
       try {
-        recognitionRef.current.stop();
+        if (recognitionRef.current) recognitionRef.current.stop();
       } catch (e) {}
       setIsListening(false);
       if (isVoiceCallActive) setVoiceCallStatus("idle");
@@ -202,16 +214,33 @@ export default function AIChatPage() {
         speechAccumulatorRef.current = "";
         handleSendMessage(captured);
       }
-    } else {
+      return;
+    }
+
+    // Android Chrome microphone permission probe
+    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
       try {
-        stopSpeaking();
-        speechAccumulatorRef.current = "";
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+      } catch (err: any) {
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          showNotification("⚠️ Microphone blocked. Please allow microphone permissions in Android/browser settings.");
+          return;
+        }
+      }
+    }
+
+    try {
+      stopSpeaking();
+      speechAccumulatorRef.current = "";
+      if (recognitionRef.current) {
         recognitionRef.current.lang = voiceLang;
         recognitionRef.current.start();
-        showNotification(voiceLang === "ta-IN" ? "🎙️ தமிழில் முழுமையாகப் பேசுங்கள்..." : "🎙️ Speak your full question in English...");
-      } catch (err) {
-        console.error("Error starting speech recognition:", err);
+        showNotification(voiceLang === "ta-IN" ? "🎙️ தமிழில் பேசுங்கள்..." : "🎙️ Listening... speak your question.");
       }
+    } catch (err) {
+      console.error("Error starting speech recognition:", err);
+      showNotification("🎙️ Microphone started. Please speak your question.");
     }
   };
 
@@ -511,17 +540,39 @@ export default function AIChatPage() {
       </header>
 
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 space-y-4 pb-28">
+      <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 space-y-4 pb-32">
         {messages.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center py-24 text-center text-on-surface-variant gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-surface-container border border-outline flex items-center justify-center text-primary-fixed shadow-xs">
-              <Sparkles className="w-6 h-6 text-primary-fixed" />
+          <div className="flex-1 flex flex-col items-center justify-center py-12 text-center text-on-surface-variant gap-4">
+            <div className="w-14 h-14 rounded-3xl bg-primary-container/60 border border-primary-fixed/30 flex items-center justify-center text-primary-fixed shadow-sm">
+              <Sparkles className="w-7 h-7 text-primary-fixed animate-pulse" />
             </div>
-            <div className="max-w-md">
-              <h3 className="text-base font-bold text-on-surface">How can AI Era help you today?</h3>
-              <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                Type or speak in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളம் (Malayalam)</strong>. AI Era automatically detects your language and provides verified clinical insights.
+            <div className="max-w-md space-y-1.5">
+              <h3 className="text-lg font-bold text-on-surface font-headline">How can AI Era assist you?</h3>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Ask in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളம் (Malayalam)</strong>. Tap any quick prompt below or speak into the microphone.
               </p>
+            </div>
+
+            {/* Quick Suggestion Chips */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg mt-2 text-left">
+              {[
+                { title: "2 Boiled Eggs & Steamed Rice Macros", icon: "🥗", query: "2 boiled eggs with 1 cup steamed rice" },
+                { title: "Upper Body Hypertrophy Routine", icon: "💪", query: "give me an upper body hypertrophy workout routine" },
+                { title: "My Clinical Blood Biomarkers", icon: "🩺", query: "how is my blood test report and testosterone?" },
+                { title: "Calculate TDEE & Daily Water Needs", icon: "💧", query: "calculate my TDEE and water intake" },
+                { title: "Creatine & Protein Supplement Guide", icon: "⚡", query: "creatine monohydrate and whey protein dosage" },
+                { title: "Book Doctor Consultation", icon: "👨‍⚕️", query: "I need to consult a doctor for joint pain" },
+              ].map((chip) => (
+                <button
+                  key={chip.title}
+                  type="button"
+                  onClick={() => handleSendMessage(chip.query)}
+                  className="p-3 rounded-xl bg-surface border border-outline hover:border-primary-fixed/50 hover:bg-surface-container text-xs font-semibold text-on-surface flex items-center gap-2.5 transition-all shadow-xs group cursor-pointer"
+                >
+                  <span className="text-base group-hover:scale-110 transition-transform">{chip.icon}</span>
+                  <span className="truncate">{chip.title}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -782,7 +833,7 @@ export default function AIChatPage() {
       {/* ========================================================================= */}
       {/* BOTTOM INPUT DOCK (FIXED & FULLY VISIBLE)                                 */}
       {/* ========================================================================= */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 pb-6 sm:pb-4 bg-surface/95 backdrop-blur-md border-t border-outline z-40 md:pl-64 shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 pb-safe bg-surface/95 backdrop-blur-md border-t border-outline z-50 md:pl-64 shadow-2xl">
         {/* Active Listening Status Banner */}
         {isListening && (
           <div className="max-w-4xl mx-auto mb-2.5 flex items-center justify-between px-3.5 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-xs font-semibold text-red-600 animate-pulse">

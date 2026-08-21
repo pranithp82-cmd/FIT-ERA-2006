@@ -944,6 +944,24 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Floating AI Agent Quick-Access Button for Android & Mobile */}
+      <Link
+        href="/ai-coach"
+        className="fixed bottom-22 right-4 sm:bottom-6 sm:right-6 z-40 p-3 sm:px-4 sm:py-3 rounded-2xl bg-gradient-to-r from-primary-fixed to-blue-600 text-white font-bold shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 border border-white/20 group"
+        title="Ask AI Agent"
+      >
+        <div className="relative flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-white animate-pulse" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full animate-ping" />
+        </div>
+        <span className="font-headline text-xs font-bold tracking-wide">
+          Ask AI Era
+        </span>
+        <span className="text-[9px] font-mono bg-white/25 px-1.5 py-0.5 rounded font-bold uppercase hidden sm:inline">
+          Agent
+        </span>
+      </Link>
     </div>
   );
 }

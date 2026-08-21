@@ -141,6 +141,20 @@ export default function TopRightLogo() {
           {/* Quick Actions List */}
           <div className="p-2 space-y-1">
             <Link
+              href="/ai-coach"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-primary-container/40 text-primary-fixed hover:bg-primary-container/70 transition-colors group border border-primary-fixed/20"
+            >
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-primary-fixed animate-pulse" />
+                <span className="font-bold">Ask AI Health Coach</span>
+              </div>
+              <span className="text-[9px] font-mono bg-primary-fixed text-white px-1.5 py-0.5 rounded-full font-bold uppercase">
+                Live
+              </span>
+            </Link>
+
+            <Link
               href="/profile"
               onClick={() => setIsOpen(false)}
               className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold hover:bg-surface-container transition-colors group"

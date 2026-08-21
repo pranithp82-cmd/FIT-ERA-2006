@@ -656,7 +656,126 @@ Target Macronutrient Distribution:
       });
     }
 
-    // 6. Conversational, Friendly, and General Wellness QA
+    // 6. Supplements & Performance Optimization Queries
+    if (
+      lower.includes("creatine") ||
+      lower.includes("whey") ||
+      lower.includes("protein powder") ||
+      lower.includes("supplement") ||
+      lower.includes("bcaa") ||
+      lower.includes("pre workout") ||
+      lower.includes("pre-workout") ||
+      lower.includes("fish oil") ||
+      lower.includes("omega 3") ||
+      lower.includes("ashwagandha") ||
+      lower.includes("multivitamin") ||
+      lower.includes("சப்ளிமெண்ட்") ||
+      lower.includes("க்ரியேட்டின்")
+    ) {
+      let suppReply = `⚡ Evidence-Based Clinical Supplement Protocol (AI Era):
+
+1. Creatine Monohydrate (Creapure):
+• Clinical Dosage: 3g to 5g daily taken consistently (any time of day with water or carbs).
+• Mechanism: Maximizes intramuscular phosphocreatine stores, boosting anaerobic ATP output by 5-15% and promoting lean muscle hydration.
+• Safety Note: No loading phase necessary; maintain 3.5L daily hydration.
+
+2. Whey Protein Isolate / Concentrate:
+• Clinical Dosage: 1 scoop (25-30g protein) post-workout or between meals.
+• Mechanism: Delivers rapid leucine (~2.7g) for maximal mTOR and Muscle Protein Synthesis (MPS) activation.
+
+3. Essential Micronutrients & Recovery:
+• Omega-3 Fish Oil: 1,000mg EPA/DHA daily for joint lubrication and cardiovascular lipid modulation.
+• Vitamin D3 + K2: 2,000-4,000 IU daily (supports bone mineralization and hormonal health).
+• Magnesium Glycinate: 200-400mg before bed for deep sleep neuromuscular recovery.${MEDICAL_DISCLAIMER}`;
+
+      if (detectedLang === "ta") {
+        suppReply = `⚡ மருத்துவ ரீதியாக நிரூபிக்கப்பட்ட சப்ளிமெண்ட் வழிகாட்டி (AI Era):
+
+1. கிரியேட்டீன் மோனோஹைட்ரேட் (Creatine Monohydrate):
+• அளவு: தினமும் 3g - 5g தண்ணீருடன் எடுத்துக்கொள்ளவும்.
+• பயன்: தசை வலிமை, ஆற்றல் மற்றும் தசை வளர்ச்சியை அதிகரிக்கிறது.
+
+2. வே புரோட்டீன் (Whey Protein):
+• அளவு: உடற்பயிற்சிக்கு பின் 1 ஸ்கூப் (25g புரதம்).
+• பயன்: விரைவான தசை வளர்ச்சி மற்றும் மீட்புக்கு உதவுகிறது.
+
+3. வைட்டமின் D3 & ஒமேகா-3:
+• இதய நலன் மற்றும் எலும்பு அடர்த்திக்கு சிறந்தது.${MEDICAL_DISCLAIMER}`;
+      }
+
+      return NextResponse.json({
+        reply: cleanAIText(suppReply),
+        spokenText: cleanAIText("Creatine 5 grams daily and Whey protein post workout are the most scientifically backed supplements for muscle hypertrophy and strength."),
+        detectedLanguage: detectedLang,
+      });
+    }
+
+    // 7. Hydration & Water Intake Guidance
+    if (
+      lower.includes("water") ||
+      lower.includes("hydration") ||
+      lower.includes("drink") ||
+      lower.includes("liters") ||
+      lower.includes("தண்ணீர்") ||
+      lower.includes("நீர்") ||
+      lower.includes("पानी") ||
+      lower.includes("വെള്ളം")
+    ) {
+      const userWeight = userContext?.weightKg || 75;
+      const targetLiters = (userWeight * 0.04).toFixed(1);
+
+      let waterReply = `💧 Clinical Hydration Framework (AI Era):
+
+Based on your body weight (${userWeight}kg) and athletic activity:
+• Baseline Target: ~${targetLiters} Liters of clean water per day.
+• Intra-Workout: Consume 250-500ml per 45 minutes of intense lifting or cardio.
+• Physiological Benefits: Optimal glomerular filtration (eGFR), lubricated articular cartilage, and 12-15% improved exercise output compared to dehydrated state.
+• Tip: Add a pinch of pink Himalayan salt / electrolytes on heavy training days.${MEDICAL_DISCLAIMER}`;
+
+      if (detectedLang === "ta") {
+        waterReply = `💧 தினசரி தண்ணீர் தேவை (AI Era):
+
+உங்கள் உடல் எடை (${userWeight}kg) மற்றும் உடற்பயிற்சிக்கேற்ப:
+• இலக்கு: தினமும் ${targetLiters} லிட்டர் தண்ணீர் குடிக்கவும்.
+• பயன்: உடற்பயிற்சியின் போது சோர்வை குறைத்து சிறுநீரக செயல்பாட்டை பாதுகாக்கிறது.${MEDICAL_DISCLAIMER}`;
+      }
+
+      return NextResponse.json({
+        reply: cleanAIText(waterReply),
+        spokenText: cleanAIText(`Your optimal daily water intake is around ${targetLiters} liters to maintain cellular hydration and kidney health.`),
+        detectedLanguage: detectedLang,
+      });
+    }
+
+    // 8. Sleep, Muscle Soreness (DOMS) & Recovery Protocol
+    if (
+      lower.includes("sleep") ||
+      lower.includes("recovery") ||
+      lower.includes("sore") ||
+      lower.includes("soreness") ||
+      lower.includes("doms") ||
+      lower.includes("rest day") ||
+      lower.includes("தூக்கம்") ||
+      lower.includes("வலி") ||
+      lower.includes("தூங்கு") ||
+      lower.includes("नींद") ||
+      lower.includes("உறக்கம்")
+    ) {
+      let recReply = `🌙 Clinical Neuromuscular Recovery & Sleep Protocol (AI Era):
+
+• Sleep Duration: 7.5 to 8.5 hours of uninterrupted sleep for peak Human Growth Hormone (HGH) release and testosterone replenishment.
+• Delayed Onset Muscle Soreness (DOMS): Normal within 24-48h of intense micro-tears. Alleviate with light walking, active stretching, and adequate sodium/potassium.
+• Rest Days: Program at least 1-2 designated active recovery days per week to prevent CNS fatigue.
+• Pre-Bed Routine: Dim blue light 60 mins before sleep, keep room cool (19-21°C), and ensure adequate magnesium.${MEDICAL_DISCLAIMER}`;
+
+      return NextResponse.json({
+        reply: cleanAIText(recReply),
+        spokenText: cleanAIText("7 to 8 hours of quality sleep and active recovery days are crucial for muscle hypertrophy and hormone replenishment."),
+        detectedLanguage: detectedLang,
+      });
+    }
+
+    // 9. Conversational, Friendly, and General Wellness QA
     let reply = "";
     let spoken = "";
 
