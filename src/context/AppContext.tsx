@@ -151,6 +151,188 @@ interface ActiveWorkoutState {
   isResting: boolean;
 }
 
+export interface MonitorAssignedDietPlan {
+  id: string;
+  title: string;
+  targetCalories: number;
+  targetProtein: number;
+  targetCarbs: number;
+  targetFat: number;
+  notes?: string;
+  assignedByName?: string;
+  assignedAt?: string;
+  meals: {
+    breakfast: { name: string; calories: number; protein: number; carbs: number; fats: number; notes?: string; items: string[] };
+    lunch: { name: string; calories: number; protein: number; carbs: number; fats: number; notes?: string; items: string[] };
+    dinner: { name: string; calories: number; protein: number; carbs: number; fats: number; notes?: string; items: string[] };
+    snacks: { name: string; calories: number; protein: number; carbs: number; fats: number; notes?: string; items: string[] };
+  };
+}
+
+export interface MonitorAssignedWorkoutPlan {
+  id: string;
+  title: string;
+  targetMuscles: string[];
+  durationMinutes: number;
+  intensity: string;
+  notes?: string;
+  assignedByName?: string;
+  assignedAt?: string;
+  exercises: {
+    name: string;
+    targetSets: number;
+    targetReps: string;
+    startingKg: number;
+    restSeconds: number;
+    focusNote?: string;
+  }[];
+}
+
+export const DEFAULT_MONITOR_DIET_PLAN: MonitorAssignedDietPlan = {
+  id: "diet_plan_default",
+  title: "Clinical Muscle Synthesis & Micronutrient Protocol",
+  targetCalories: 2850,
+  targetProtein: 165,
+  targetCarbs: 310,
+  targetFat: 70,
+  notes: "Focus on clean high-protein sources, bioavailable iron from greens, and timing carbs around training.",
+  assignedByName: "Coach Akash",
+  assignedAt: "Today, 09:00 AM",
+  meals: {
+    breakfast: {
+      name: "Boiled Eggs & Fresh Fruits (Apple & Papaya)",
+      calories: 420,
+      protein: 30,
+      carbs: 40,
+      fats: 14,
+      notes: "4 Whole Boiled Eggs + Fresh Fruit Slices",
+      items: ["4 Whole Farm Eggs", "1 Apple / Papaya", "1 Glass Warm Water / Green Tea"],
+    },
+    lunch: {
+      name: "Chicken Breast, Steamed Rice & Fresh Salad",
+      calories: 650,
+      protein: 48,
+      carbs: 70,
+      fats: 14,
+      notes: "High-protein recovery meal with dietary fiber",
+      items: ["200g Grilled / Cooked Chicken Breast", "1.5 cup Steamed Rice", "Cucumber, Carrot & Tomato Salad"],
+    },
+    dinner: {
+      name: "Grilled Chicken & Whole Wheat Chapati with Curd",
+      calories: 520,
+      protein: 45,
+      carbs: 48,
+      fats: 12,
+      notes: "Lean protein & slow-digesting carbs for overnight recovery",
+      items: ["180g Tender Chicken Breast", "2 Whole Wheat Chapatis", "1 Cup Fresh Curd / Yogurt"],
+    },
+    snacks: {
+      name: "Roasted Pumpkin Seeds, Almonds & Banana",
+      calories: 260,
+      protein: 12,
+      carbs: 32,
+      fats: 10,
+      notes: "High natural zinc, fiber & sustained energy",
+      items: ["30g Roasted Pumpkin Seeds", "10 Raw Almonds", "1 Fresh Ripe Banana"],
+    },
+  },
+};
+
+export const DEFAULT_MONITOR_WORKOUT_PLAN: MonitorAssignedWorkoutPlan = {
+  id: "workout_plan_default",
+  title: "Coach Akash: Hypertrophy & Unilateral Symmetry Split",
+  targetMuscles: ["Chest", "Upper Back", "Hamstrings", "Rear Delts"],
+  durationMinutes: 50,
+  intensity: "High Performance",
+  notes: "Prioritize controlled 3-second eccentrics and explosive concentric drive. Rest 75-90s between heavy sets.",
+  assignedByName: "Coach Akash",
+  assignedAt: "Today, 09:00 AM",
+  exercises: [
+    {
+      name: "Incline Barbell Bench Press",
+      targetSets: 4,
+      targetReps: "8-10",
+      startingKg: 75,
+      restSeconds: 90,
+      focusNote: "30° bench angle, drive elbows inward at 45°",
+    },
+    {
+      name: "Chest-Supported T-Bar Row",
+      targetSets: 4,
+      targetReps: "10-12",
+      startingKg: 65,
+      restSeconds: 75,
+      focusNote: "Squeeze lats at apex, 1s pause at full contraction",
+    },
+    {
+      name: "Single-Leg Romanian Deadlift",
+      targetSets: 3,
+      targetReps: "10",
+      startingKg: 28,
+      restSeconds: 75,
+      focusNote: "Left leg symmetry focus, deep hamstring eccentric load",
+    },
+    {
+      name: "Face Pull with External Rotation",
+      targetSets: 4,
+      targetReps: "15",
+      startingKg: 25,
+      restSeconds: 60,
+      focusNote: "Pull to eye level, flare rear delts at peak",
+    },
+  ],
+};
+export const DEFAULT_AI_NUTRITION_RECOMMENDATIONS: Record<string, RecommendedMealDetail> = {
+  Breakfast: {
+    mealType: "Breakfast",
+    name: "Boiled Eggs with Fresh Fruits (Apple & Papaya)",
+    targetTags: "Vitamin D & High Protein",
+    calories: 380,
+    protein: 28,
+    carbs: 34,
+    fats: 14,
+    prepTime: "5 mins",
+    micros: ["Vitamin D 450 IU", "Vitamin C 65mg", "Choline 300mg", "Vitamin B12 2.2mcg"],
+    reason: "Whole farm eggs provide natural Vitamin D and complete protein, paired with fresh fruits for quick digestion and clean micronutrients.",
+  },
+  Lunch: {
+    mealType: "Lunch",
+    name: "Chicken Breast, Steamed Rice & Mixed Salad",
+    targetTags: "High Protein & Dietary Fiber",
+    calories: 580,
+    protein: 46,
+    carbs: 62,
+    fats: 12,
+    prepTime: "15 mins",
+    micros: ["Dietary Fiber 8g", "Potassium 680mg", "Vitamin B6 1.2mg", "Iron 3.5mg"],
+    reason: "High-protein chicken breast paired with steamed rice and cucumber-carrot salad for sustained daily energy and muscle recovery.",
+  },
+  Dinner: {
+    mealType: "Dinner",
+    name: "Grilled Chicken & Whole Wheat Chapati with Curd",
+    targetTags: "Lean Protein & Overnight Recovery",
+    calories: 500,
+    protein: 44,
+    carbs: 46,
+    fats: 10,
+    prepTime: "15 mins",
+    micros: ["Calcium 220mg", "Zinc 4.8mg", "Magnesium 95mg", "Phosphorus 360mg"],
+    reason: "Lean grilled chicken with whole wheat chapatis and probiotic curd to accelerate overnight muscle repair.",
+  },
+  Snacks: {
+    mealType: "Snacks",
+    name: "Roasted Pumpkin Seeds, Almonds & Banana",
+    targetTags: "High Fiber, Zinc & Healthy Fats",
+    calories: 240,
+    protein: 12,
+    carbs: 30,
+    fats: 9,
+    prepTime: "2 mins",
+    micros: ["Dietary Fiber 7.5g", "Zinc 4.2mg", "Magnesium 150mg", "Potassium 480mg"],
+    reason: "Crunchy roasted pumpkin seeds, raw almonds, and fresh banana provide rich natural dietary fiber, zinc, and clean sustained energy.",
+  },
+};
+
 interface AppContextType {
   user: UserProfile;
   dailyStats: DailySummary;
@@ -175,6 +357,12 @@ interface AppContextType {
     name?: string,
     macros?: { calories: number; protein: number; carbs: number; fats: number }
   ) => void;
+
+  // Monitor Assigned Plans
+  assignedDietPlanFromMonitor: MonitorAssignedDietPlan;
+  assignedWorkoutPlanFromMonitor: MonitorAssignedWorkoutPlan;
+  saveMonitorDietPlan: (plan: Partial<MonitorAssignedDietPlan>) => void;
+  saveMonitorWorkoutPlan: (plan: Partial<MonitorAssignedWorkoutPlan>) => void;
 
   // AI Nutrition & Blood Panel Integration
   hasBloodReport: boolean;
@@ -283,6 +471,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hasDxaReport, setHasDxaReport] = useState<boolean>(false);
   const [activeWeakMuscles, setActiveWeakMuscles] = useState<SimpleWeakMuscleProtocol[]>([]);
 
+  // Monitor Assigned Diet and Workout Plans
+  const [assignedDietPlanFromMonitor, setAssignedDietPlanFromMonitor] = useState<MonitorAssignedDietPlan>(DEFAULT_MONITOR_DIET_PLAN);
+  const [assignedWorkoutPlanFromMonitor, setAssignedWorkoutPlanFromMonitor] = useState<MonitorAssignedWorkoutPlan>(DEFAULT_MONITOR_WORKOUT_PLAN);
+
   // Monitor Credentials & Clinical Access Portal State
   const [monitorCredentials, setMonitorCredentials] = useState<{
     monitorId: string;
@@ -307,21 +499,101 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedWeak = localStorage.getItem("erafit_active_weak_muscles");
       const savedCreds = localStorage.getItem("erafit_monitor_credentials");
       const savedUser = localStorage.getItem("erafit_user_profile");
+      const savedDietPlan = localStorage.getItem("erafit_assigned_diet_plan");
+      const savedWorkoutPlan = localStorage.getItem("erafit_assigned_workout_plan");
 
-      if (savedBlood === "true" && savedRecs) {
+      // Auto-purge any legacy recipes from localStorage
+      if (savedRecs) {
+        const parsed = JSON.parse(savedRecs);
+        if (
+          JSON.stringify(parsed).includes("Desi") ||
+          JSON.stringify(parsed).includes("Ayala") ||
+          JSON.stringify(parsed).includes("Moong") ||
+          JSON.stringify(parsed).includes("Moringa") ||
+          JSON.stringify(parsed).includes("Flaxseeds")
+        ) {
+          setAiNutritionRecommendations(DEFAULT_AI_NUTRITION_RECOMMENDATIONS);
+          localStorage.setItem("erafit_ai_nutrition_recs", JSON.stringify(DEFAULT_AI_NUTRITION_RECOMMENDATIONS));
+        } else {
+          setAiNutritionRecommendations(parsed);
+        }
+      } else {
+        setAiNutritionRecommendations(DEFAULT_AI_NUTRITION_RECOMMENDATIONS);
+      }
+
+      if (savedBlood === "true") {
         setHasBloodReport(true);
-        setAiNutritionRecommendations(JSON.parse(savedRecs));
-        if (savedDef) setBloodDeficiencies(JSON.parse(savedDef));
+      }
+      if (savedDef) {
+        setBloodDeficiencies(JSON.parse(savedDef));
       }
       if (savedDxa === "true") {
         setHasDxaReport(true);
         setActiveWeakMuscles(savedWeak ? JSON.parse(savedWeak) : DEFAULT_SIMPLE_WEAK_MUSCLES);
       }
       if (savedCreds) setMonitorCredentials(JSON.parse(savedCreds));
-      if (savedUser) setUser(JSON.parse(savedUser));
       if (savedLogs) setDailyMealMonitorLogs(JSON.parse(savedLogs));
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+        if (
+          parsedUser.name === "Alex Mercer" ||
+          parsedUser.name === "Alex Morgan" ||
+          parsedUser.email === "alex.mercer@gmail.com" ||
+          !parsedUser.avatar?.includes("pranith")
+        ) {
+          const updatedUser = {
+            ...parsedUser,
+            name: "Pranith A",
+            email: "pranithp82@gmail.com",
+            avatar: "/images/pranith.jpg",
+            age: 19,
+            gender: "Male",
+          };
+          setUser(updatedUser);
+          localStorage.setItem("erafit_user_profile", JSON.stringify(updatedUser));
+        } else {
+          setUser(parsedUser);
+        }
+      } else {
+        setUser({
+          ...INITIAL_USER,
+          name: "Pranith A",
+          email: "pranithp82@gmail.com",
+          avatar: "/images/pranith.jpg",
+          age: 19,
+          gender: "Male",
+        });
+      }
       if (savedMyMeal) setMyMealCompletion(JSON.parse(savedMyMeal));
       if (savedDailyPlan) setDailyPlanCompletion(JSON.parse(savedDailyPlan));
+
+      if (savedDietPlan) {
+        const parsedDiet = JSON.parse(savedDietPlan);
+        if (
+          JSON.stringify(parsedDiet).includes("Egg White Scramble") ||
+          JSON.stringify(parsedDiet).includes("Wild Salmon") ||
+          JSON.stringify(parsedDiet).includes("Marcus")
+        ) {
+          setAssignedDietPlanFromMonitor(DEFAULT_MONITOR_DIET_PLAN);
+          localStorage.setItem("erafit_assigned_diet_plan", JSON.stringify(DEFAULT_MONITOR_DIET_PLAN));
+        } else {
+          setAssignedDietPlanFromMonitor(parsedDiet);
+        }
+      } else {
+        setAssignedDietPlanFromMonitor(DEFAULT_MONITOR_DIET_PLAN);
+      }
+
+      if (savedWorkoutPlan) {
+        const parsedWorkout = JSON.parse(savedWorkoutPlan);
+        if (JSON.stringify(parsedWorkout).includes("Marcus")) {
+          setAssignedWorkoutPlanFromMonitor(DEFAULT_MONITOR_WORKOUT_PLAN);
+          localStorage.setItem("erafit_assigned_workout_plan", JSON.stringify(DEFAULT_MONITOR_WORKOUT_PLAN));
+        } else {
+          setAssignedWorkoutPlanFromMonitor(parsedWorkout);
+        }
+      } else {
+        setAssignedWorkoutPlanFromMonitor(DEFAULT_MONITOR_WORKOUT_PLAN);
+      }
     } catch (e) {
       console.warn("Could not parse saved storage data", e);
     }
@@ -342,10 +614,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("erafit_active_weak_muscles", JSON.stringify(activeWeakMuscles));
       localStorage.setItem("erafit_monitor_credentials", JSON.stringify(monitorCredentials));
       localStorage.setItem("erafit_user_profile", JSON.stringify(user));
+      localStorage.setItem("erafit_assigned_diet_plan", JSON.stringify(assignedDietPlanFromMonitor));
+      localStorage.setItem("erafit_assigned_workout_plan", JSON.stringify(assignedWorkoutPlanFromMonitor));
     } catch (e) {
       // ignore
     }
-  }, [hasBloodReport, aiNutritionRecommendations, bloodDeficiencies, dailyMealMonitorLogs, myMealCompletion, dailyPlanCompletion, hasDxaReport, activeWeakMuscles, monitorCredentials, user]);
+  }, [hasBloodReport, aiNutritionRecommendations, bloodDeficiencies, dailyMealMonitorLogs, myMealCompletion, dailyPlanCompletion, hasDxaReport, activeWeakMuscles, monitorCredentials, user, assignedDietPlanFromMonitor, assignedWorkoutPlanFromMonitor]);
+
+  // Monitor Plan Updaters
+  const saveMonitorDietPlan = (plan: Partial<MonitorAssignedDietPlan>) => {
+    const updatedPlan: MonitorAssignedDietPlan = {
+      ...assignedDietPlanFromMonitor,
+      ...plan,
+      assignedAt: "Today, " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setAssignedDietPlanFromMonitor(updatedPlan);
+    showNotification("🥗 Monitor Diet Plan successfully aligned & saved for Athlete!");
+  };
+
+  const saveMonitorWorkoutPlan = (plan: Partial<MonitorAssignedWorkoutPlan>) => {
+    const updatedPlan: MonitorAssignedWorkoutPlan = {
+      ...assignedWorkoutPlanFromMonitor,
+      ...plan,
+      assignedAt: "Today, " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setAssignedWorkoutPlanFromMonitor(updatedPlan);
+    showNotification("🏋️‍♂️ Monitor Workout Plan successfully aligned & saved for Athlete!");
+  };
 
   // DXA Weak Muscle Generator
   const generateWeakMusclesFromDxa = (dxaData?: any) => {
@@ -454,66 +749,66 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Deterministic generator of Authentic Indian Food recommendations tailored to blood biomarkers
   const generateIndianRecommendationsFromBlood = (markers?: any[]) => {
-    // Generate Indian meal recommendations targeting key biomarkers (Vitamin D, B12, Iron, Omega-3, Blood Sugar)
+    // Generate simple, high-protein Indian meal recommendations with whole eggs, chicken, fresh fruits & pumpkin seeds
     const indianRecommendations: Record<string, RecommendedMealDetail> = {
       Breakfast: {
         mealType: "Breakfast",
-        name: "Desi Country Egg Bhurji & Moringa Keerai with Ragi Dosa",
-        targetTags: "Targeting Vitamin D3, B12 & Bioavailable Iron",
-        calories: 360,
-        protein: 34,
-        carbs: 22,
-        fats: 10,
-        prepTime: "12 mins",
-        micros: ["Vitamin D3 600 IU", "Bioavailable Iron 5.8mg", "Vitamin B12 2.6mcg", "Zinc 4.2mg"],
-        reason: "Country eggs & Moringa (முருங்கைக்கீரை) provide dense Vitamin D3 & Iron to reverse clinical blood panel deficiencies.",
+        name: "Boiled Eggs with Fresh Fruits (Apple & Papaya)",
+        targetTags: "Vitamin D & High Protein",
+        calories: 380,
+        protein: 28,
+        carbs: 34,
+        fats: 14,
+        prepTime: "5 mins",
+        micros: ["Vitamin D 450 IU", "Vitamin C 65mg", "Choline 300mg", "Vitamin B12 2.2mcg"],
+        reason: "Whole farm eggs provide natural Vitamin D and complete protein, paired with fresh fruits for quick digestion and clean micronutrients.",
       },
       Lunch: {
         mealType: "Lunch",
-        name: "Sprouted Moong Dal Khichdi & Palak Poriyal with Curd",
-        targetTags: "Targeting Dietary Fiber, Folate & Gut Microbiome",
-        calories: 490,
-        protein: 28,
-        carbs: 64,
-        fats: 11,
+        name: "Chicken Breast, Steamed Rice & Mixed Salad",
+        targetTags: "High Protein & Dietary Fiber",
+        calories: 580,
+        protein: 46,
+        carbs: 62,
+        fats: 12,
         prepTime: "15 mins",
-        micros: ["Dietary Fiber 16g", "Folate (B9) 320mcg", "Potassium 840mg", "Magnesium 120mg"],
-        reason: "Whole sprouted lentils & spinach (பசலைக்கீரை) optimize insulin sensitivity and red blood cell synthesis.",
+        micros: ["Dietary Fiber 8g", "Potassium 680mg", "Vitamin B6 1.2mg", "Iron 3.5mg"],
+        reason: "High-protein chicken breast paired with steamed rice and cucumber-carrot salad for sustained daily energy and muscle recovery.",
       },
       Dinner: {
         mealType: "Dinner",
-        name: "Grilled Ayala (Indian Mackerel) Fish Curry with Steamed Broccoli & Cauli Rice",
-        targetTags: "Targeting Omega-3 EPA/DHA, Calcium & Lean Protein",
-        calories: 520,
+        name: "Grilled Chicken & Whole Wheat Chapati with Curd",
+        targetTags: "Lean Protein & Overnight Recovery",
+        calories: 500,
         protein: 44,
-        carbs: 16,
-        fats: 18,
-        prepTime: "20 mins",
-        micros: ["Omega-3 EPA/DHA 2.9g", "Calcium 240mg", "Vitamin E 4.8mg", "Selenium 52mcg"],
-        reason: "Rich in wild marine Omega-3 fatty acids to reduce serum triglycerides and promote overnight myofibrillar repair.",
+        carbs: 46,
+        fats: 10,
+        prepTime: "15 mins",
+        micros: ["Calcium 220mg", "Zinc 4.8mg", "Magnesium 95mg", "Phosphorus 360mg"],
+        reason: "Lean grilled chicken with whole wheat chapatis and probiotic curd to accelerate overnight muscle repair.",
       },
       Snacks: {
         mealType: "Snacks",
-        name: "Roasted Flaxseeds & Pumpkin Seeds Trail Mix with Masala Buttermilk (மோர்)",
-        targetTags: "Targeting Calcium, Magnesium, Zinc & Probiotics",
-        calories: 210,
-        protein: 16,
-        carbs: 14,
-        fats: 7,
+        name: "Roasted Pumpkin Seeds, Almonds & Banana",
+        targetTags: "High Fiber, Zinc & Healthy Fats",
+        calories: 240,
+        protein: 12,
+        carbs: 30,
+        fats: 9,
         prepTime: "2 mins",
-        micros: ["Calcium 350mg", "Probiotics 8 Billion CFU", "Zinc 4.5mg", "Alpha-Linolenic Acid 1.8g"],
-        reason: "Electrolyte-dense buttermilk and flaxseeds enhance digestion and restore micronutrient reserves.",
+        micros: ["Dietary Fiber 7.5g", "Zinc 4.2mg", "Magnesium 150mg", "Potassium 480mg"],
+        reason: "Crunchy roasted pumpkin seeds, raw almonds, and fresh banana provide rich natural dietary fiber, zinc, and clean sustained energy.",
       },
     };
 
     setHasBloodReport(true);
     setBloodDeficiencies([
-      "Vitamin D3 Deficiency (< 30 ng/mL)",
-      "Low Serum Ferritin & Iron Reserve",
-      "Elevated Triglyceride to HDL Ratio",
+      "Vitamin D3 & Micronutrient Support",
+      "Lean Muscle Synthesis & Recovery",
+      "High Dietary Fiber & Zinc Status",
     ]);
     setAiNutritionRecommendations(indianRecommendations);
-    showNotification("🧬 AI Clinical Nutrition: Generated Indian diet plan tailored to your blood biomarkers!");
+    showNotification("🧬 AI Nutrition: Generated clean Indian diet plan (Eggs, Chicken, Fruits, Pumpkin Seeds)!");
   };
 
   const clearBloodReport = () => {
@@ -957,7 +1252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: data.id || `msg_${Date.now() + 1}`,
         sender: "ai",
         timestamp: new Date(data.timestamp || Date.now()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        text: data.content || "I am processing your request...",
+        text: data.reply || data.content || data.text || "I am processing your request...",
       };
       
       setAiChat((prev) => [...prev, aiMsg]);
@@ -1014,6 +1309,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         generateWeakMusclesFromDxa,
         clearDxaReport,
         setDxaWeakMuscles,
+        assignedDietPlanFromMonitor,
+        assignedWorkoutPlanFromMonitor,
+        saveMonitorDietPlan,
+        saveMonitorWorkoutPlan,
         monitorCredentials,
         updateMonitorPin,
         toggleMonitorSync,

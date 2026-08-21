@@ -131,12 +131,12 @@ export interface AIChatMessage {
 
 export const INITIAL_USER: UserProfile = {
   id: "usr_001",
-  name: "Alex Morgan",
-  email: "alex.morgan@erafit.ai",
-  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+  name: "Pranith A",
+  email: "pranithp82@gmail.com",
+  avatar: "/images/pranith.jpg",
   membership: "NOIR PRO ELITE",
   level: "Advanced Athlete",
-  age: 28,
+  age: 19,
   gender: "Male",
   bloodType: "O+ Positive",
   primaryGoal: "Hypertrophy & Longevity",

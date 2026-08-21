@@ -154,12 +154,29 @@ const FOOD_TRANSLATION_MAP: Record<string, string> = {
   தயிர்: "curd yogurt",
   பால்: "milk",
   வாழைப்பழம்: "banana",
+  பனானா: "banana",
   ஆப்பிள்: "apple",
   மீன்: "fish",
   கோழி: "chicken",
   கோழிக்கறி: "chicken breast",
   பொரியல்: "vegetable poriyal",
   பன்னீர்: "paneer",
+  பூரி: "poori",
+  பொங்கல்: "pongal",
+  கேரட்: "carrot",
+  பீன்ஸ்: "beans",
+  சிக்கன்: "chicken",
+
+  // Transliterations / Common Slang
+  muttai: "egg",
+  dosai: "dosa",
+  idly: "idli",
+  sappathi: "chapati",
+  banana: "banana",
+  bananala: "banana",
+  panana: "banana",
+  poori: "poori",
+  pongal: "pongal",
 
   // Hindi
   अंडा: "egg",
@@ -244,10 +261,50 @@ export function detectLanguage(text: string): SupportedLanguage {
 }
 
 /**
+ * Strips conversational boilerplate (how much, nutrition in, எவ்வளவு, சத்துக்கள், etc.)
+ * and normalizes regional case endings (-ல, -யில், -இல், -த்தில).
+ */
+export function extractCoreFoodName(query: string): string {
+  let cleaned = query.toLowerCase().trim();
+
+  // Strip question & nutrition query boilerplate words
+  cleaned = cleaned
+    .replace(/\b(how much|how many|nutrition in|nutrition of|nutrition|calories in|calorie in|calories|calorie|protein in|protein|macros in|macro|what is the|tell me about|is there in|give me)\b/gi, " ")
+    .replace(/\b(எவ்வளவு|எவ்ளோ|நியூட்ரிஷன்|சத்துக்கள்|சத்து|புரதம்|புரோட்டீன்|கலோரிகள்|கலோரி|கொழுப்பு|இருக்கு|இருக்கும்|சொல்லு|சொல்லுங்க|வேணும்|பற்றி|குறித்து|மதிப்பு|என்ன)\b/gi, " ")
+    .replace(/\b(kitna|kitni|poshan|calorie|calories|protein|batao|bataiye|hota hai|hoti hai|kya hai)\b/gi, " ")
+    .replace(/\b(ethra|poshakam|protein|calorie|und|aanu|parayu)\b/gi, " ")
+    .replace(/[?,.!\n\r]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) return query;
+
+  // Normalize Tamil case endings: -ல, -யில, -யில், -இல், -த்தில, -த்துல, -யோட
+  const tokens = cleaned.split(/\s+/).map((t) => {
+    if (t.endsWith("யில") || t.endsWith("யில்") || t.endsWith("யோட")) {
+      return t.replace(/(யில|யில்|யோட)$/, "");
+    }
+    if (t.endsWith("த்தில்") || t.endsWith("த்துல") || t.endsWith("த்தில")) {
+      return t.replace(/(த்தில்|த்துல|த்தில)$/, "ம்");
+    }
+    if (t.endsWith("ல") && t.length > 2) {
+      return t.replace(/ல$/, "");
+    }
+    if (t.endsWith("இல்") && t.length > 3) {
+      return t.replace(/இல்$/, "");
+    }
+    return t;
+  });
+
+  return tokens.join(" ").trim() || query;
+}
+
+/**
  * Translates regional food names into English search terms for database lookup
  */
 export function translateToEnglishSearchTerm(query: string): string {
-  const words = query.trim().split(/\s+/);
+  const core = extractCoreFoodName(query);
+  const words = core.trim().split(/\s+/);
   const translatedWords = words.map((w) => FOOD_TRANSLATION_MAP[w.toLowerCase()] || w);
   return translatedWords.join(" ");
 }

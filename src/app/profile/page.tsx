@@ -165,11 +165,8 @@ export default function ProfilePage() {
             <ArrowLeft className="w-5 h-5 text-on-surface" />
           </Link>
           <div>
-            <span className="text-xs font-mono uppercase tracking-wider text-primary-fixed font-bold">
-              ATHLETE ACCOUNT
-            </span>
             <h1 className="text-2xl sm:text-3xl font-bold text-on-surface">
-              Athlete Profile & Access Portal
+              Profile & Access Portal
             </h1>
           </div>
         </div>
@@ -205,22 +202,11 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* User Info & Quick Tags */}
+        {/* User Info & Quick Actions */}
         <div className="text-center md:text-left flex-1">
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5">
-            <h2 className="text-2xl sm:text-3xl font-bold text-on-surface">
-              {user.name}
-            </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-primary-fixed text-xs font-bold font-mono">
-              {user.membership || "NOIR PRO ELITE"}
-            </span>
-          </div>
-
-          <p className="text-xs sm:text-sm text-on-surface-variant flex items-center justify-center md:justify-start gap-2">
-            <span>Primary Focus: <strong>{user.primaryGoal || "Hypertrophy & Longevity"}</strong></span>
-            <span>•</span>
-            <span className="font-mono text-emerald-600 font-semibold">Active Sync</span>
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-on-surface mb-1">
+            {user.name}
+          </h2>
 
           <div className="mt-4 flex flex-wrap gap-2.5 justify-center md:justify-start">
             <button
@@ -295,11 +281,6 @@ export default function ProfilePage() {
               <span className="text-xs text-on-surface-variant font-mono uppercase">Blood Group</span>
               <span className="text-sm font-bold text-primary-fixed">{user.bloodType || "O+ Positive"}</span>
             </div>
-
-            <div className="sm:col-span-2 p-3.5 rounded-xl bg-surface-container/60 border border-outline flex flex-col gap-1">
-              <span className="text-xs text-on-surface-variant font-mono uppercase">Primary Athletic Goal</span>
-              <span className="text-sm font-bold text-on-surface">{user.primaryGoal || "Hypertrophy & Longevity"}</span>
-            </div>
           </div>
         </section>
 
@@ -325,7 +306,7 @@ export default function ProfilePage() {
           </div>
 
           <p className="text-xs text-on-surface-variant leading-relaxed">
-            Provide these credentials to your <strong>Coach, Doctor/Physician, or Parents (Father/Mother)</strong> to allow them to monitor your daily meals, workouts, and health metrics.
+            Share these credentials with your <strong>Coach Akash</strong> or doctor. They can enter this <strong>Monitor Access ID</strong> and <strong>Access PIN</strong> on the main Login page to access the Monitor Portal and align your nutrition and workout plans.
           </p>
 
           {/* ID & Password Card */}
@@ -333,7 +314,7 @@ export default function ProfilePage() {
             {/* Monitor ID */}
             <div>
               <label className="text-[11px] font-mono font-bold text-on-surface-variant uppercase block mb-1">
-                Athlete Monitor ID
+                Monitor Access ID
               </label>
               <div className="flex items-center justify-between bg-surface border border-outline rounded-xl px-3 py-2">
                 <span className="font-mono text-sm font-black text-primary-fixed tracking-wider">
@@ -381,20 +362,31 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Change PIN Trigger Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setPinError("");
-              setNewPinValue("");
-              setConfirmPinValue("");
-              setIsChangePinModalOpen(true);
-            }}
-            className="w-full py-2.5 rounded-xl bg-surface border border-outline hover:bg-surface-container text-xs font-bold text-on-surface flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-          >
-            <Key className="w-3.5 h-3.5 text-primary-fixed" />
-            <span>Change / Reset Monitor Password</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Change PIN Trigger Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setPinError("");
+                setNewPinValue("");
+                setConfirmPinValue("");
+                setIsChangePinModalOpen(true);
+              }}
+              className="flex-1 py-2.5 rounded-xl bg-surface border border-outline hover:bg-surface-container text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5 text-primary-fixed" />
+              <span>Change PIN</span>
+            </button>
+
+            {/* Direct Open Monitor Portal */}
+            <Link
+              href="/monitor"
+              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Open Monitor Portal</span>
+            </Link>
+          </div>
 
           {/* Active Authorized Monitors */}
           <div className="pt-2 border-t border-outline flex flex-col gap-2">
@@ -518,19 +510,6 @@ export default function ProfilePage() {
                     value={editFormData.bloodType}
                     onChange={(e) => setEditFormData({ ...editFormData, bloodType: e.target.value })}
                     placeholder="e.g. O+ Positive, A+, B+"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-outline text-sm text-on-surface focus:border-primary-fixed outline-none shadow-sm"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-mono font-bold text-on-surface-variant uppercase block mb-1">
-                    Primary Goal
-                  </label>
-                  <input
-                    type="text"
-                    value={editFormData.primaryGoal}
-                    onChange={(e) => setEditFormData({ ...editFormData, primaryGoal: e.target.value })}
-                    placeholder="e.g. Hypertrophy & Longevity, Fat Loss"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-outline text-sm text-on-surface focus:border-primary-fixed outline-none shadow-sm"
                   />
                 </div>

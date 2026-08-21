@@ -156,6 +156,7 @@ export default function WorkoutTrackerPage() {
     activeWorkout,
     hasDxaReport,
     activeWeakMuscles,
+    assignedWorkoutPlanFromMonitor,
   } = useApp();
 
   // Modals & State
@@ -797,133 +798,105 @@ export default function WorkoutTrackerPage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-2xl font-extrabold text-on-surface">
-                  Workout Assigned By Your Monitor
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-mono uppercase font-bold text-blue-600 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">
+                    Coach Prescribed Regimen
+                  </span>
+                  <span className="text-xs text-on-surface-variant font-mono">
+                    • {assignedWorkoutPlanFromMonitor.assignedByName || "Coach Akash"}
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-on-surface">
+                  {assignedWorkoutPlanFromMonitor.title}
                 </h3>
                 <p className="text-xs text-on-surface-variant mt-1 max-w-xl">
-                  AI-calibrated training programs generated directly from your recovery readiness, heart rate variability, and movement telemetry.
+                  {assignedWorkoutPlanFromMonitor.notes || "AI-calibrated training program generated directly from your recovery readiness and diagnostic telemetry."}
                 </p>
               </div>
 
-              {/* Prominent Action Button */}
-              <button
-                type="button"
-                onClick={() => setShowMonitorWorkouts(!showMonitorWorkouts)}
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-sm shrink-0 cursor-pointer ${
-                  showMonitorWorkouts
-                    ? "bg-surface-container border border-outline text-on-surface hover:bg-surface-container-high"
-                    : "bg-primary-fixed text-white hover:bg-primary-fixed/90 hover:shadow-md"
-                }`}
-              >
-                <span>{showMonitorWorkouts ? "Hide Programs" : "View Assigned Workouts"}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                    showMonitorWorkouts ? "bg-surface text-on-surface" : "bg-white/20 text-white"
-                  }`}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    showNotification(`🚀 Launching Monitor Assigned Workout: ${assignedWorkoutPlanFromMonitor.title}`);
+                    startWorkout({
+                      id: `assigned_${Date.now()}`,
+                      title: assignedWorkoutPlanFromMonitor.title,
+                      subtitle: `${assignedWorkoutPlanFromMonitor.exercises.length} Movements • Prescribed by Coach Akash`,
+                      category: "Hypertrophy",
+                      durationMinutes: assignedWorkoutPlanFromMonitor.durationMinutes || 45,
+                      estimatedBurnKcal: 420,
+                      intensity: (assignedWorkoutPlanFromMonitor.intensity as any) || "Peak Performance",
+                      targetMuscles: assignedWorkoutPlanFromMonitor.targetMuscles || ["Full Body"],
+                      exercises: assignedWorkoutPlanFromMonitor.exercises.map((ex: any, idx: number) => ({
+                        exerciseId: `mon_ex_${idx}`,
+                        name: ex.name,
+                        targetSets: ex.targetSets || 3,
+                        targetReps: ex.targetReps || "10-12",
+                        restSeconds: ex.restSeconds || 75,
+                        sets: Array.from({ length: ex.targetSets || 3 }).map((_, sIdx) => ({
+                          setNumber: sIdx + 1,
+                          weightKg: ex.startingKg || 50,
+                          reps: parseInt(String(ex.targetReps).split("-")[0]) || 10,
+                          completed: false,
+                        })),
+                      })),
+                    });
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  3
-                </span>
-                {showMonitorWorkouts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Start Assigned Workout</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMonitorWorkouts(!showMonitorWorkouts)}
+                  className="p-2.5 rounded-xl bg-surface-container border border-outline text-on-surface hover:bg-surface-container-high cursor-pointer"
+                  title="Toggle Movements"
+                >
+                  {showMonitorWorkouts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
-            {/* Expanded Assigned Workouts Grid */}
-            {showMonitorWorkouts && (
-              <div className="pt-4 border-t border-outline grid grid-cols-1 md:grid-cols-3 gap-3.5 animate-fadeIn">
-                <div className="p-4 rounded-xl bg-surface-container/70 border border-outline hover:border-primary-fixed/40 transition-all flex flex-col justify-between gap-3 shadow-sm group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-primary-container text-primary-fixed">
-                        Hypertrophy
-                      </span>
-                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">
-                        45 min • 420 kcal
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">
-                      1. Upper Body Hypertrophy Focus
-                    </h4>
-                    <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
-                      Assigned by Coach Nova • Calibrated for high chest &amp; shoulder readiness (92%).
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCompleteAssignedWorkout("prog_1", "Upper Body Hypertrophy Focus", 45, 420, "Hypertrophy")}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      completedMonitorWorkoutIds.includes("prog_1")
-                        ? "bg-emerald-600 text-white cursor-default"
-                        : "bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-md"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{completedMonitorWorkoutIds.includes("prog_1") ? "Completed ✓" : "Completed"}</span>
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-xl bg-surface-container/70 border border-outline hover:border-primary-fixed/40 transition-all flex flex-col justify-between gap-3 shadow-sm group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                        Recovery &amp; Cardio
-                      </span>
-                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">
-                        30 min • 210 kcal
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">
-                      2. Zone 2 Aerobic Base Recovery
-                    </h4>
-                    <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
-                      HRV Optimized (72ms) • Active parasympathetic recovery &amp; fat oxidation.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCompleteAssignedWorkout("prog_2", "Zone 2 Aerobic Base Recovery", 30, 210, "Cardio & Recovery")}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      completedMonitorWorkoutIds.includes("prog_2")
-                        ? "bg-emerald-600 text-white cursor-default"
-                        : "bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-md"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{completedMonitorWorkoutIds.includes("prog_2") ? "Completed ✓" : "Completed"}</span>
-                  </button>
-                </div>
-
-                <div className="p-4 rounded-xl bg-surface-container/70 border border-outline hover:border-primary-fixed/40 transition-all flex flex-col justify-between gap-3 shadow-sm group">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-purple-100 text-purple-800">
-                        DXA Corrective
-                      </span>
-                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">
-                        20 min • 140 kcal
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-on-surface group-hover:text-primary-fixed transition-colors">
-                      3. Posterior Chain &amp; Spine Decompression
-                    </h4>
-                    <p className="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
-                      Symmetry Protocol • Unilateral leg balance &amp; lower lumbar relief.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCompleteAssignedWorkout("prog_3", "Posterior Chain & Spine Decompression", 20, 140, "DXA Corrective")}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      completedMonitorWorkoutIds.includes("prog_3")
-                        ? "bg-emerald-600 text-white cursor-default"
-                        : "bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-md"
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{completedMonitorWorkoutIds.includes("prog_3") ? "Completed ✓" : "Completed"}</span>
-                  </button>
-                </div>
+            {/* Prescribed Movements Grid */}
+            <div className="pt-2 border-t border-outline">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-mono uppercase font-bold text-on-surface-variant">
+                  Prescribed Movements ({assignedWorkoutPlanFromMonitor.exercises.length}):
+                </span>
+                <span className="text-xs font-mono text-on-surface-variant">
+                  {assignedWorkoutPlanFromMonitor.durationMinutes} min • {assignedWorkoutPlanFromMonitor.intensity}
+                </span>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {assignedWorkoutPlanFromMonitor.exercises.map((ex: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-surface-container/60 border border-outline flex flex-col justify-between gap-2 shadow-sm hover:border-blue-500/40 transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-mono font-bold text-blue-600">#{idx + 1} Movement</span>
+                        <span className="font-mono text-[10px] text-on-surface-variant">{ex.restSeconds}s rest</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-on-surface line-clamp-1">{ex.name}</h4>
+                      <span className="text-xs font-mono text-primary-fixed block mt-0.5">
+                        {ex.targetSets} Sets × {ex.targetReps} reps • {ex.startingKg} kg
+                      </span>
+                      {ex.focusNote && (
+                        <p className="text-[10px] text-on-surface-variant mt-1 line-clamp-2">
+                          💡 {ex.focusNote}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </section>
         </div>
       )}

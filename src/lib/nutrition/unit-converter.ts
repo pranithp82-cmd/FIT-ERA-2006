@@ -1,4 +1,5 @@
 // Unit conversion & deterministic serving size math engine
+import { extractCoreFoodName } from "./translator";
 
 export interface ParsedFoodQuery {
   rawQuery: string;
@@ -257,15 +258,15 @@ export function parseFoodQuery(query: string): ParsedFoodQuery {
     }
   }
 
-  // Clean food name
-  foodName = foodName
+  // Clean food name with multi-language boilerplate and case-ending stripper
+  foodName = extractCoreFoodName(foodName)
     .replace(/^(of|cups? of|bowls? of|plates? of|grams? of|glasses? of)\s+/i, "")
     .replace(/^(boiled|raw|cooked|fresh|large|medium|small|standard|steamed|grilled|fried)\s+/i, "")
     .replace(/[?,.!\n\r]+/g, "")
     .trim();
 
   if (!foodName) {
-    foodName = trimmed;
+    foodName = extractCoreFoodName(trimmed) || trimmed;
   }
 
   // Check base item weight in grams

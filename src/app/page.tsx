@@ -51,6 +51,7 @@ export default function DashboardPage() {
     hasBloodReport,
     aiNutritionRecommendations,
     generateIndianRecommendationsFromBlood,
+    assignedDietPlanFromMonitor,
   } = useApp();
 
   const [waterAmount, setWaterAmount] = useState<number>(dailyStats?.waterIntakeLiters || 1.2);
@@ -247,19 +248,15 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-sm">
               {/* Breakfast Card */}
               <div
-                onClick={() => toggleMyMeal("breakfast", "Oatmeal + Banana")}
+                onClick={() => toggleMyMeal("breakfast", assignedDietPlanFromMonitor.meals.breakfast.name)}
                 className={`bg-surface-container-high rounded-lg p-sm border border-outline flex items-center gap-sm cursor-pointer transition-all hover:bg-surface-variant ${
                   myMealCompletion.breakfast ? "border-primary-fixed/50" : "opacity-70"
                 }`}
               >
-                <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0">
-                  <img
-                    alt="Oatmeal"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWq5G4RRoW9LzPk36Xrvl8zU3CZVV8hxha0lkkjBHW9ECmwhGZ9xFsDk4uBup0l0hXCeVrQrKDBbjPxtgCIVL8ZjqM3ixMAE_C6N3ctg9eSjapS0WE_2Qxtzc3AzxVpX_enQ5UepRtS7Uig68fZFklsBWo2FyX8o_vfXcQGPyOJYhyFa_Zyeyj5DLa68ikPlgTL14Qm2e9N5F2rWWL2ChYhHSm7VS91sjuJeztJvTYUew6SnLS4ksszw"
-                  />
+                <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary-fixed">wb_sunny</span>
                 </div>
-                <div className="flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-label-md text-label-md text-primary-fixed font-bold">
                       Breakfast
@@ -268,27 +265,23 @@ export default function DashboardPage() {
                       {myMealCompletion.breakfast ? "check_circle" : "radio_button_unchecked"}
                     </span>
                   </div>
-                  <span className={`font-label-sm text-label-sm text-on-surface-variant ${myMealCompletion.breakfast ? "line-through text-primary-fixed" : ""}`}>
-                    Oatmeal + Banana
+                  <span className={`font-label-sm text-label-sm text-on-surface-variant truncate ${myMealCompletion.breakfast ? "line-through text-primary-fixed" : ""}`}>
+                    {assignedDietPlanFromMonitor.meals.breakfast.name}
                   </span>
                 </div>
               </div>
 
               {/* Lunch Card */}
               <div
-                onClick={() => toggleMyMeal("lunch", "Chicken Salad")}
+                onClick={() => toggleMyMeal("lunch", assignedDietPlanFromMonitor.meals.lunch.name)}
                 className={`bg-surface-container-high rounded-lg p-sm border border-outline flex items-center gap-sm cursor-pointer transition-all hover:bg-surface-variant ${
                   myMealCompletion.lunch ? "border-primary-fixed/50" : "opacity-70"
                 }`}
               >
-                <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0">
-                  <img
-                    alt="Salad"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBjen43HKALX6v-TkV4Q_kI_iIVubGkLUWESob8eU35SWc5WqpH46y88x2HU7fOrQ9j5gj3pdeWHHN3xq8Ajji5JvEoq1Ym1Hqznz4iiht9ELwSyzbzVLMrH_bTRw_VPYoBAXcJkbhKDWmxQQQDm8hMzUpmpFAySiZqOg4vnFx30gVp05VzOS0T0Un6Ez1dsGc7EXU_HW_tbzk7zCLfzeXLuQxp5dgoedwphjqr22U39dFGgINtt5tpg"
-                  />
+                <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary-fixed">lunch_dining</span>
                 </div>
-                <div className="flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-label-md text-label-md text-primary-fixed font-bold">
                       Lunch
@@ -297,23 +290,23 @@ export default function DashboardPage() {
                       {myMealCompletion.lunch ? "check_circle" : "radio_button_unchecked"}
                     </span>
                   </div>
-                  <span className={`font-label-sm text-label-sm text-on-surface-variant ${myMealCompletion.lunch ? "line-through text-primary-fixed" : ""}`}>
-                    Chicken Salad
+                  <span className={`font-label-sm text-label-sm text-on-surface-variant truncate ${myMealCompletion.lunch ? "line-through text-primary-fixed" : ""}`}>
+                    {assignedDietPlanFromMonitor.meals.lunch.name}
                   </span>
                 </div>
               </div>
 
               {/* Dinner Card */}
               <div
-                onClick={() => toggleMyMeal("dinner", "Steamed Salmon & Quinoa")}
+                onClick={() => toggleMyMeal("dinner", assignedDietPlanFromMonitor.meals.dinner.name)}
                 className={`bg-surface-container-high rounded-lg p-sm border border-outline flex items-center gap-sm cursor-pointer transition-all hover:bg-surface-variant ${
                   myMealCompletion.dinner ? "border-primary-fixed/50" : "opacity-70"
                 }`}
               >
                 <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-on-surface-variant">restaurant</span>
+                  <span className="material-symbols-outlined text-on-surface-variant">dinner_dining</span>
                 </div>
-                <div className="flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-label-md text-label-md text-primary-fixed font-bold">
                       Dinner
@@ -322,15 +315,15 @@ export default function DashboardPage() {
                       {myMealCompletion.dinner ? "check_circle" : "radio_button_unchecked"}
                     </span>
                   </div>
-                  <span className={`font-label-sm text-label-sm text-on-surface-variant ${myMealCompletion.dinner ? "line-through text-primary-fixed" : ""}`}>
-                    {myMealCompletion.dinner ? "Steamed Salmon" : "Pending"}
+                  <span className={`font-label-sm text-label-sm text-on-surface-variant truncate ${myMealCompletion.dinner ? "line-through text-primary-fixed" : ""}`}>
+                    {assignedDietPlanFromMonitor.meals.dinner.name}
                   </span>
                 </div>
               </div>
 
               {/* Snacks Card */}
               <div
-                onClick={() => toggleMyMeal("snacks", "Greek Yogurt")}
+                onClick={() => toggleMyMeal("snacks", assignedDietPlanFromMonitor.meals.snacks.name)}
                 className={`bg-surface-container-high rounded-lg p-sm border border-outline flex items-center gap-sm cursor-pointer transition-all hover:bg-surface-variant ${
                   myMealCompletion.snacks ? "border-primary-fixed/50" : "opacity-70"
                 }`}
@@ -338,7 +331,7 @@ export default function DashboardPage() {
                 <div className="w-12 h-12 rounded bg-surface border border-outline overflow-hidden flex-shrink-0 flex items-center justify-center">
                   <span className="material-symbols-outlined text-on-surface-variant">restaurant</span>
                 </div>
-                <div className="flex flex-col flex-grow">
+                <div className="flex flex-col flex-grow min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="font-label-md text-label-md text-primary-fixed font-bold">
                       Snacks
@@ -347,8 +340,8 @@ export default function DashboardPage() {
                       {myMealCompletion.snacks ? "check_circle" : "radio_button_unchecked"}
                     </span>
                   </div>
-                  <span className={`font-label-sm text-label-sm text-on-surface-variant ${myMealCompletion.snacks ? "line-through text-primary-fixed" : ""}`}>
-                    {myMealCompletion.snacks ? "Greek Yogurt" : "Pending"}
+                  <span className={`font-label-sm text-label-sm text-on-surface-variant truncate ${myMealCompletion.snacks ? "line-through text-primary-fixed" : ""}`}>
+                    {assignedDietPlanFromMonitor.meals.snacks.name}
                   </span>
                 </div>
               </div>
@@ -382,136 +375,160 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
               {/* ===================================================================== */}
-              {/* SECTION A: DAILY MEAL PLAN MONITOR (INDEPENDENT WITH PHOTO UPLOAD)   */}
+              {/* SECTION A: DAILY MEAL MONITOR (ALIGNED BY MONITOR WITH PHOTO LOGS)  */}
               {/* ===================================================================== */}
               <div className="flex flex-col gap-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-headline-md text-headline-md text-on-surface font-semibold">
-                    Daily Meal Monitor
-                  </h3>
-                  <span className="text-[11px] font-mono text-primary-fixed bg-primary-container px-2 py-0.5 rounded font-bold">
-                    Independent Plan
-                  </span>
+                <div className="flex flex-col gap-1.5 mb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-headline-md text-headline-md text-on-surface font-semibold flex items-center gap-2">
+                      <span>Daily Meal Monitor</span>
+                    </h3>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-bold shrink-0">
+                      Prescribed by {assignedDietPlanFromMonitor.assignedByName || "Coach Akash"}
+                    </span>
+                  </div>
+                  <div className="flex items-center flex-wrap gap-1.5 text-[11px] font-mono">
+                    <span className="text-on-surface-variant font-medium">Daily Target:</span>
+                    <span className="font-bold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">{assignedDietPlanFromMonitor.targetCalories} kcal</span>
+                    <span className="text-on-surface-variant">•</span>
+                    <span className="font-bold text-primary-fixed bg-primary-container px-1.5 py-0.5 rounded">{assignedDietPlanFromMonitor.targetProtein}g P</span>
+                    <span className="text-on-surface-variant">•</span>
+                    <span className="font-bold text-on-surface bg-surface-container border border-outline px-1.5 py-0.5 rounded">{assignedDietPlanFromMonitor.targetCarbs}g C</span>
+                    <span className="text-on-surface-variant">•</span>
+                    <span className="font-bold text-on-surface bg-surface-container border border-outline px-1.5 py-0.5 rounded">{assignedDietPlanFromMonitor.targetFat}g F</span>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-sm">
                   {/* Breakfast Row */}
-                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2 rounded-lg hover:bg-surface-container transition-all">
+                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2.5 rounded-xl hover:bg-surface-container transition-all">
                     <div
-                      onClick={() => toggleDailyPlanMeal("breakfast", "Oatmeal & Berries")}
-                      className="flex items-center gap-sm cursor-pointer flex-1"
+                      onClick={() => toggleDailyPlanMeal("breakfast", assignedDietPlanFromMonitor.meals.breakfast.name)}
+                      className="flex items-center gap-sm cursor-pointer flex-1 min-w-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline">
+                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline shrink-0">
                         <span className={`material-symbols-outlined ${dailyPlanCompletion.breakfast ? "text-primary-fixed" : "text-secondary"}`}>
                           {dailyPlanCompletion.breakfast ? "check_circle" : "radio_button_unchecked"}
                         </span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className={`font-body-md text-body-md leading-tight text-on-surface ${dailyPlanCompletion.breakfast ? "line-through text-on-surface-variant font-semibold" : ""}`}>
-                          Oatmeal &amp; Berries
+                      <div className="flex flex-col min-w-0">
+                        <span className={`font-body-md text-sm leading-tight text-on-surface font-bold truncate ${dailyPlanCompletion.breakfast ? "line-through text-on-surface-variant" : ""}`}>
+                          {assignedDietPlanFromMonitor.meals.breakfast.name}
                         </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">Recommended food • Breakfast</span>
+                        <span className="font-label-sm text-[11px] text-on-surface-variant font-mono">
+                          Breakfast • {assignedDietPlanFromMonitor.meals.breakfast.calories} kcal • {assignedDietPlanFromMonitor.meals.breakfast.protein}g Protein
+                          {assignedDietPlanFromMonitor.meals.breakfast.notes && ` • ${assignedDietPlanFromMonitor.meals.breakfast.notes}`}
+                        </span>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleOpenPhotoUpload("Breakfast", "Oatmeal & Berries")}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline hover:border-primary-fixed text-[11px] font-mono text-primary-fixed flex items-center gap-1 transition-all"
-                      title="Upload photo for Breakfast"
+                      onClick={() => handleOpenPhotoUpload("Breakfast", assignedDietPlanFromMonitor.meals.breakfast.name)}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-outline hover:border-emerald-500 text-xs font-mono text-emerald-600 flex items-center gap-1.5 transition-all shrink-0 ml-2 shadow-sm cursor-pointer"
+                      title="Upload photo proof of Breakfast"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Photo</span>
+                      <span className="hidden sm:inline">Photo Proof</span>
                     </button>
                   </div>
 
                   {/* Lunch Row */}
-                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2 rounded-lg hover:bg-surface-container transition-all">
+                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2.5 rounded-xl hover:bg-surface-container transition-all">
                     <div
-                      onClick={() => toggleDailyPlanMeal("lunch", "Grilled Chicken Salad")}
-                      className="flex items-center gap-sm cursor-pointer flex-1"
+                      onClick={() => toggleDailyPlanMeal("lunch", assignedDietPlanFromMonitor.meals.lunch.name)}
+                      className="flex items-center gap-sm cursor-pointer flex-1 min-w-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline">
+                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline shrink-0">
                         <span className={`material-symbols-outlined ${dailyPlanCompletion.lunch ? "text-primary-fixed" : "text-secondary"}`}>
                           {dailyPlanCompletion.lunch ? "check_circle" : "radio_button_unchecked"}
                         </span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className={`font-body-md text-body-md leading-tight text-on-surface ${dailyPlanCompletion.lunch ? "line-through text-on-surface-variant font-semibold" : ""}`}>
-                          Grilled Chicken Salad
+                      <div className="flex flex-col min-w-0">
+                        <span className={`font-body-md text-sm leading-tight text-on-surface font-bold truncate ${dailyPlanCompletion.lunch ? "line-through text-on-surface-variant" : ""}`}>
+                          {assignedDietPlanFromMonitor.meals.lunch.name}
                         </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">Recommended food • Lunch</span>
+                        <span className="font-label-sm text-[11px] text-on-surface-variant font-mono">
+                          Lunch • {assignedDietPlanFromMonitor.meals.lunch.calories} kcal • {assignedDietPlanFromMonitor.meals.lunch.protein}g Protein
+                          {assignedDietPlanFromMonitor.meals.lunch.notes && ` • ${assignedDietPlanFromMonitor.meals.lunch.notes}`}
+                        </span>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleOpenPhotoUpload("Lunch", "Grilled Chicken Salad")}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline hover:border-primary-fixed text-[11px] font-mono text-primary-fixed flex items-center gap-1 transition-all"
-                      title="Upload photo for Lunch"
+                      onClick={() => handleOpenPhotoUpload("Lunch", assignedDietPlanFromMonitor.meals.lunch.name)}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-outline hover:border-blue-500 text-xs font-mono text-blue-600 flex items-center gap-1.5 transition-all shrink-0 ml-2 shadow-sm cursor-pointer"
+                      title="Upload photo proof of Lunch"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Photo</span>
+                      <span className="hidden sm:inline">Photo Proof</span>
                     </button>
                   </div>
 
                   {/* Dinner Row */}
-                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2 rounded-lg hover:bg-surface-container transition-all">
+                  <div className="flex items-center justify-between pb-sm border-b border-outline p-2.5 rounded-xl hover:bg-surface-container transition-all">
                     <div
-                      onClick={() => toggleDailyPlanMeal("dinner", "Steamed Salmon & Quinoa")}
-                      className="flex items-center gap-sm cursor-pointer flex-1"
+                      onClick={() => toggleDailyPlanMeal("dinner", assignedDietPlanFromMonitor.meals.dinner.name)}
+                      className="flex items-center gap-sm cursor-pointer flex-1 min-w-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline">
+                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline shrink-0">
                         <span className={`material-symbols-outlined ${dailyPlanCompletion.dinner ? "text-primary-fixed" : "text-secondary"}`}>
                           {dailyPlanCompletion.dinner ? "check_circle" : "radio_button_unchecked"}
                         </span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className={`font-body-md text-body-md leading-tight text-on-surface ${dailyPlanCompletion.dinner ? "line-through text-on-surface-variant font-semibold" : ""}`}>
-                          Steamed Salmon &amp; Quinoa
+                      <div className="flex flex-col min-w-0">
+                        <span className={`font-body-md text-sm leading-tight text-on-surface font-bold truncate ${dailyPlanCompletion.dinner ? "line-through text-on-surface-variant" : ""}`}>
+                          {assignedDietPlanFromMonitor.meals.dinner.name}
                         </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">Recommended food • Dinner</span>
+                        <span className="font-label-sm text-[11px] text-on-surface-variant font-mono">
+                          Dinner • {assignedDietPlanFromMonitor.meals.dinner.calories} kcal • {assignedDietPlanFromMonitor.meals.dinner.protein}g Protein
+                          {assignedDietPlanFromMonitor.meals.dinner.notes && ` • ${assignedDietPlanFromMonitor.meals.dinner.notes}`}
+                        </span>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleOpenPhotoUpload("Dinner", "Steamed Salmon & Quinoa")}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline hover:border-primary-fixed text-[11px] font-mono text-primary-fixed flex items-center gap-1 transition-all"
-                      title="Upload photo for Dinner"
+                      onClick={() => handleOpenPhotoUpload("Dinner", assignedDietPlanFromMonitor.meals.dinner.name)}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-outline hover:border-purple-500 text-xs font-mono text-purple-600 flex items-center gap-1.5 transition-all shrink-0 ml-2 shadow-sm cursor-pointer"
+                      title="Upload photo proof of Dinner"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Photo</span>
+                      <span className="hidden sm:inline">Photo Proof</span>
                     </button>
                   </div>
 
                   {/* Snacks Row */}
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-container transition-all">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl hover:bg-surface-container transition-all">
                     <div
-                      onClick={() => toggleDailyPlanMeal("snacks", "Greek Yogurt")}
-                      className="flex items-center gap-sm cursor-pointer flex-1"
+                      onClick={() => toggleDailyPlanMeal("snacks", assignedDietPlanFromMonitor.meals.snacks.name)}
+                      className="flex items-center gap-sm cursor-pointer flex-1 min-w-0"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline">
+                      <div className="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center border border-outline shrink-0">
                         <span className={`material-symbols-outlined ${dailyPlanCompletion.snacks ? "text-primary-fixed" : "text-secondary"}`}>
                           {dailyPlanCompletion.snacks ? "check_circle" : "radio_button_unchecked"}
                         </span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className={`font-body-md text-body-md leading-tight text-on-surface ${dailyPlanCompletion.snacks ? "line-through text-on-surface-variant font-semibold" : ""}`}>
-                          Greek Yogurt &amp; Walnuts
+                      <div className="flex flex-col min-w-0">
+                        <span className={`font-body-md text-sm leading-tight text-on-surface font-bold truncate ${dailyPlanCompletion.snacks ? "line-through text-on-surface-variant" : ""}`}>
+                          {assignedDietPlanFromMonitor.meals.snacks.name}
                         </span>
-                        <span className="font-label-sm text-label-sm text-on-surface-variant">Recommended food • Snacks</span>
+                        <span className="font-label-sm text-[11px] text-on-surface-variant font-mono">
+                          Snacks • {assignedDietPlanFromMonitor.meals.snacks.calories} kcal • {assignedDietPlanFromMonitor.meals.snacks.protein}g Protein
+                          {assignedDietPlanFromMonitor.meals.snacks.notes && ` • ${assignedDietPlanFromMonitor.meals.snacks.notes}`}
+                        </span>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => handleOpenPhotoUpload("Snacks", "Greek Yogurt & Walnuts")}
-                      className="px-2.5 py-1.5 rounded-lg bg-surface border border-outline hover:border-primary-fixed text-[11px] font-mono text-primary-fixed flex items-center gap-1 transition-all"
-                      title="Upload photo for Snacks"
+                      onClick={() => handleOpenPhotoUpload("Snacks", assignedDietPlanFromMonitor.meals.snacks.name)}
+                      className="px-3 py-1.5 rounded-lg bg-surface border border-outline hover:border-amber-500 text-xs font-mono text-amber-600 flex items-center gap-1.5 transition-all shrink-0 ml-2 shadow-sm cursor-pointer"
+                      title="Upload photo proof of Snacks"
                     >
                       <Camera className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Photo</span>
+                      <span className="hidden sm:inline">Photo Proof</span>
                     </button>
                   </div>
                 </div>

@@ -14,14 +14,23 @@ model User {
   id            String         @id @default(uuid())
   name          String
   email         String         @unique
+  passwordHash  String?
+  role          String         @default("USER") // "USER", "MONITOR", "ADMIN"
+  phone         String?
+  avatar        String?
+  gender        String?
+  goal          String?
   age           Int?
   heightCm      Float?
   weightKg      Float?
   location      String?
+  bloodType     String?
+  status        String         @default("ACTIVE") // "ACTIVE", "INACTIVE"
   trainerSync   Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   
+  // Clinical & Telemetry relations
   healthReports HealthReport[]
   dxaReports    DXAReport[]
   foodLogs      FoodLog[]
@@ -29,6 +38,112 @@ model User {
   waterLogs     WaterLog[]
   healthMetrics HealthMetric[]
   conversations AIConversation[]
+
+  // Monitor and RBAC relations
+  monitorProfile      MonitorProfile?
+  assignedToMonitors  UserMonitorAssignment[]
+  monitorNotes        MonitorNote[]
+}
+
+model MonitorProfile {
+  id              String                  @id @default(uuid())
+  userId          String                  @unique
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitorId       String                  @unique // e.g., "ERA-MON-8942"
+  specialization  String                  @default("Sports Medicine & Conditioning")
+  experienceYears Int                     @default(4)
+  status          String                  @default("ACTIVE") // "ACTIVE", "INACTIVE"
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @default(now()) @updatedAt
+
+  assignments     UserMonitorAssignment[]
+  notes           MonitorNote[]
+}
+
+model UserMonitorAssignment {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitorId   String
+  monitor     MonitorProfile @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  assignedAt  DateTime       @default(now())
+  status      String         @default("ACTIVE") // "ACTIVE", "PAUSED", "REVOKED"
+  notes       String?
+  assignedBy  String?        // Admin ID or name
+  updatedAt   DateTime       @default(now()) @updatedAt
+
+  @@unique([userId, monitorId])
+}
+
+model AssignmentHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  userName    String?
+  monitorId   String
+  monitorName String?
+  action      String   // "ASSIGNED", "REASSIGNED", "REMOVED", "STATUS_CHANGE"
+  performedBy String
+  details     String?
+  timestamp   DateTime @default(now())
+}
+
+model MonitorNote {
+  id        String         @id @default(uuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitorId String
+  monitor   MonitorProfile @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  category  String         @default("GENERAL") // "WORKOUT", "DIET", "GENERAL", "MEDICAL_OBSERVATION"
+  isTask    Boolean        @default(false)
+  completed Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @default(now()) @updatedAt
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String
+  actorName    String
+  actorRole    String   // "USER", "MONITOR", "ADMIN"
+  targetUserId String?
+  action       String   // "UPDATE_WORKOUT", "UPDATE_DIET", "ADD_NOTE", "UPDATE_GOAL", "ASSIGN_MONITOR", "STATUS_CHANGE"
+  fieldName    String?
+  previousValue String?
+  newValue     String?
+  notes        String?
+  timestamp    DateTime @default(now())
+}
+
+model AssignedWorkoutPlan {
+  id             String   @id @default(uuid())
+  userId         String
+  title          String
+  notes          String?
+  exercises      String   // JSON stringified array of exercises, sets, reps, weight
+  assignedBy     String?  // Monitor ID / Name
+  assignedByName String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model AssignedDietPlan {
+  id             String   @id @default(uuid())
+  userId         String
+  title          String
+  targetCalories Float?
+  targetProtein  Float?
+  targetCarbs    Float?
+  targetFat      Float?
+  meals          String   // JSON stringified array of meals
+  notes          String?
+  assignedBy     String?  // Monitor ID / Name
+  assignedByName String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
 }
 
 model HealthReport {

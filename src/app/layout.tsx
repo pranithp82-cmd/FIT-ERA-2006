@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
 import { AppProvider } from "@/context/AppContext";
 import { Navigation } from "@/components/layout/Navigation";
 import TopRightLogo from "@/components/layout/TopRightLogo";
@@ -17,9 +18,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#2563EB",
+};
+
 export const metadata: Metadata = {
   title: "EraFit // Healthcare Platform",
   description: "AI healthcare and fitness platform.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "EraFit",
+  },
 };
 
 export default function RootLayout({
@@ -42,13 +56,15 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-background text-on-surface flex flex-col antialiased selection:bg-primary-fixed selection:text-white">
-        <AppProvider>
-          <Navigation />
-          <TopRightLogo />
-          <main className="flex-1 md:pl-64 pt-6 md:pt-8 pb-24 md:pb-8">{children}</main>
-          <ActiveWorkoutDrawer />
-          <NotificationToast />
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <Navigation />
+            <TopRightLogo />
+            <main className="flex-1 md:pl-64 pt-6 md:pt-8 pb-24 md:pb-8">{children}</main>
+            <ActiveWorkoutDrawer />
+            <NotificationToast />
+          </AppProvider>
+        </AuthProvider>
       </body>
     </html>
   );

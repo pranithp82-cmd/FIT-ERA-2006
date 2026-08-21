@@ -66,10 +66,14 @@ export default function AIChatPage() {
   const [isVoiceCallActive, setIsVoiceCallActive] = useState(false);
   const [voiceCallStatus, setVoiceCallStatus] = useState<"listening" | "thinking" | "speaking" | "idle">("idle");
 
-  // Web Speech API STT State
+  // Voice Language & Continuous Speech Recognition State
+  const [voiceLang, setVoiceLang] = useState<"ta-IN" | "en-IN">("ta-IN");
   const [isListening, setIsListening] = useState(false);
-  const [speechTranscript, setSpeechTranscript] = useState("");
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<any>(null);
+  const speechAccumulatorRef = useRef<string>("");
+  const isSendingRef = useRef<boolean>(false);
+  const lastSentRef = useRef<{ text: string; time: number }>({ text: "", time: 0 });
 
   // Web Speech API TTS State
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -83,35 +87,72 @@ export default function AIChatPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize Speech Recognition on Mount
+  // Initialize Speech Recognition on Mount / when voiceLang changes
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
       if (SpeechRecognition) {
+        // Abort previous instance if any
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.abort();
+          } catch (e) {}
+        }
+
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = true;
+        recognition.lang = voiceLang;
 
         recognition.onstart = () => {
           setIsListening(true);
-          setSpeechTranscript("");
+          speechAccumulatorRef.current = "";
           if (isVoiceCallActive) setVoiceCallStatus("listening");
         };
 
         recognition.onresult = (event: any) => {
-          let currentTranscript = "";
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            currentTranscript += event.results[i][0].transcript;
+          let interimTranscript = "";
+          let finalTranscript = "";
+
+          for (let i = 0; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript + " ";
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
           }
-          setSpeechTranscript(currentTranscript);
+
+          const fullCaptured = (finalTranscript + interimTranscript).trim();
+          speechAccumulatorRef.current = fullCaptured;
+          setInputText(fullCaptured);
+
+          // Reset silence debounce timer: automatically finalize after 2.5s of silence
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = setTimeout(() => {
+            const textToSend = speechAccumulatorRef.current.trim();
+            if (textToSend && !isSendingRef.current) {
+              speechAccumulatorRef.current = "";
+              if (silenceTimerRef.current) {
+                clearTimeout(silenceTimerRef.current);
+                silenceTimerRef.current = null;
+              }
+              try {
+                recognition.stop();
+              } catch (e) {}
+              setIsListening(false);
+              handleSendMessage(textToSend);
+            }
+          }, 2500);
         };
 
         recognition.onerror = (event: any) => {
           console.warn("Speech recognition error:", event.error);
-          setIsListening(false);
-          if (isVoiceCallActive) setVoiceCallStatus("idle");
+          if (event.error !== "no-speech") {
+            setIsListening(false);
+            if (isVoiceCallActive) setVoiceCallStatus("idle");
+          }
         };
 
         recognition.onend = () => {
@@ -121,37 +162,53 @@ export default function AIChatPage() {
         recognitionRef.current = recognition;
       }
     }
-  }, [isVoiceCallActive]);
 
-  // When Speech Input Ends -> Auto-detect and send
-  useEffect(() => {
-    if (!isListening && speechTranscript.trim()) {
-      const captured = speechTranscript.trim();
-      setSpeechTranscript("");
-      handleSendMessage(captured);
-    }
-  }, [isListening, speechTranscript]);
+    return () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {}
+      }
+    };
+  }, [voiceLang, isVoiceCallActive]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Start / Stop Microphone Listening with Auto-Detection
+  // Start / Stop Microphone Listening with Full Sentence Gathering
   const toggleListening = () => {
     if (!recognitionRef.current) {
       showNotification("⚠️ Voice input is not supported in this browser. Please type your message.");
       return;
     }
 
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
     if (isListening) {
-      recognitionRef.current.stop();
+      // User tapped to finish: immediately send the gathered sentence
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
       setIsListening(false);
       if (isVoiceCallActive) setVoiceCallStatus("idle");
+
+      const captured = speechAccumulatorRef.current.trim() || inputText.trim();
+      if (captured) {
+        speechAccumulatorRef.current = "";
+        handleSendMessage(captured);
+      }
     } else {
       try {
         stopSpeaking();
-        recognitionRef.current.lang = "en-US";
+        speechAccumulatorRef.current = "";
+        recognitionRef.current.lang = voiceLang;
         recognitionRef.current.start();
+        showNotification(voiceLang === "ta-IN" ? "🎙️ தமிழில் முழுமையாகப் பேசுங்கள்..." : "🎙️ Speak your full question in English...");
       } catch (err) {
         console.error("Error starting speech recognition:", err);
       }
@@ -210,10 +267,36 @@ export default function AIChatPage() {
     }
   };
 
-  // Main Message Dispatcher with Automatic Language Intelligence
+  // Main Message Dispatcher with Automatic Language Intelligence and Deduplication Lock
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text) return;
+
+    // Prevent duplicate triggers if already dispatching or identical message sent within 2 seconds
+    const now = Date.now();
+    if (isSendingRef.current) return;
+    if (lastSentRef.current.text === text && now - lastSentRef.current.time < 2000) {
+      return;
+    }
+
+    isSendingRef.current = true;
+    lastSentRef.current = { text, time: now };
+
+    // Clear any active silence timer and accumulated speech buffer
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    speechAccumulatorRef.current = "";
+    setInputText("");
+
+    // Stop recognition if active
+    if (recognitionRef.current && isListening) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      setIsListening(false);
+    }
 
     // Automatic Language Detection from query content
     const autoLang = detectLanguage(text);
@@ -227,7 +310,6 @@ export default function AIChatPage() {
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    setInputText("");
     setIsTyping(true);
 
     if (isVoiceCallActive) setVoiceCallStatus("thinking");
@@ -274,6 +356,9 @@ export default function AIChatPage() {
       if (isVoiceCallActive) setVoiceCallStatus("idle");
     } finally {
       setIsTyping(false);
+      setTimeout(() => {
+        isSendingRef.current = false;
+      }, 500);
     }
   };
 
@@ -426,10 +511,7 @@ export default function AIChatPage() {
       </header>
 
       {/* ========================================================================= */}
-      {/* MAIN CHAT CONVERSATION STREAM                                             */}
-      {/* ========================================================================= */}
       <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 space-y-4 pb-28">
-        {/* Clean Empty State when no messages */}
         {messages.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center py-24 text-center text-on-surface-variant gap-3">
             <div className="w-12 h-12 rounded-2xl bg-surface-container border border-outline flex items-center justify-center text-primary-fixed shadow-xs">
@@ -438,7 +520,7 @@ export default function AIChatPage() {
             <div className="max-w-md">
               <h3 className="text-base font-bold text-on-surface">How can AI Era help you today?</h3>
               <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                Type or speak in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളം (Malayalam)</strong>. AI Era automatically detects your language and provides verified clinical insights.
+                Type or speak in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളம் (Malayalam)</strong>. AI Era automatically detects your language and provides verified clinical insights.
               </p>
             </div>
           </div>
@@ -701,7 +783,32 @@ export default function AIChatPage() {
       {/* BOTTOM INPUT DOCK (FIXED & FULLY VISIBLE)                                 */}
       {/* ========================================================================= */}
       <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-4 pb-6 sm:pb-4 bg-surface/95 backdrop-blur-md border-t border-outline z-40 md:pl-64 shadow-lg">
+        {/* Active Listening Status Banner */}
+        {isListening && (
+          <div className="max-w-4xl mx-auto mb-2.5 flex items-center justify-between px-3.5 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-xs font-semibold text-red-600 animate-pulse">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+              <span>{voiceLang === "ta-IN" ? "🎙️ முழுமையாகப் பேசுங்கள் (தமிழில் கேட்கிறது)..." : "🎙️ Speak your full question in English..."}</span>
+            </span>
+            <span className="text-[11px] font-mono text-red-700 hidden sm:inline">பேசி முடித்ததும் Mic அழுத்தவும்</span>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto flex items-center gap-2">
+          {/* Voice Language Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              const next = voiceLang === "ta-IN" ? "en-IN" : "ta-IN";
+              setVoiceLang(next);
+              showNotification(next === "ta-IN" ? "🇮🇳 குரல் மொழி: தமிழ் (ta-IN)" : "🌐 Voice Language: English (en-IN)");
+            }}
+            className="px-2.5 py-3 rounded-xl bg-surface border border-outline hover:bg-surface-container text-xs font-mono font-bold text-on-surface flex items-center gap-1 shadow-xs cursor-pointer shrink-0"
+            title="Toggle Voice Recognition Language (Tamil / English)"
+          >
+            <span>{voiceLang === "ta-IN" ? "🇮🇳 தமிழ்" : "🌐 EN"}</span>
+          </button>
+
           {/* Microphone STT Trigger */}
           <button
             type="button"
@@ -711,7 +818,7 @@ export default function AIChatPage() {
                 ? "bg-red-500 text-white border-red-600 animate-pulse ring-4 ring-red-500/20"
                 : "bg-surface border-outline text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
             }`}
-            title={isListening ? "Listening... (Click to stop)" : "Voice Query (Click to speak)"}
+            title={isListening ? "Listening... (Click to finish and send)" : "Voice Query (Click to speak in full sentence)"}
           >
             {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
@@ -728,7 +835,7 @@ export default function AIChatPage() {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask AI Era in English, தமிழ், हिंदी, or മലയാളம்..."
+              placeholder={voiceLang === "ta-IN" ? "தமிழிலோ அல்லது ஆங்கிலத்திலோ கேளுங்கள்..." : "Ask AI Era in English, தமிழ், हिंदी, or മലയാളം..."}
               className="w-full px-4 py-3 rounded-xl bg-surface border border-outline text-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary-fixed focus:ring-2 focus:ring-primary-fixed/20 shadow-sm"
             />
 
