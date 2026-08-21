@@ -542,37 +542,15 @@ export default function AIChatPage() {
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col max-w-4xl w-full mx-auto p-4 space-y-4 pb-32">
         {messages.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center py-12 text-center text-on-surface-variant gap-4">
+          <div className="flex-1 flex flex-col items-center justify-center py-20 text-center text-on-surface-variant gap-4">
             <div className="w-14 h-14 rounded-3xl bg-primary-container/60 border border-primary-fixed/30 flex items-center justify-center text-primary-fixed shadow-sm">
               <Sparkles className="w-7 h-7 text-primary-fixed animate-pulse" />
             </div>
             <div className="max-w-md space-y-1.5">
               <h3 className="text-lg font-bold text-on-surface font-headline">How can AI Era assist you?</h3>
               <p className="text-xs text-on-surface-variant leading-relaxed">
-                Ask in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളம் (Malayalam)</strong>. Tap any quick prompt below or speak into the microphone.
+                Type or speak in <strong>English, தமிழ் (Tamil), हिंदी (Hindi), or മലയാളം (Malayalam)</strong>. AI Era automatically detects your language and provides verified clinical insights.
               </p>
-            </div>
-
-            {/* Quick Suggestion Chips */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg mt-2 text-left">
-              {[
-                { title: "2 Boiled Eggs & Steamed Rice Macros", icon: "🥗", query: "2 boiled eggs with 1 cup steamed rice" },
-                { title: "Upper Body Hypertrophy Routine", icon: "💪", query: "give me an upper body hypertrophy workout routine" },
-                { title: "My Clinical Blood Biomarkers", icon: "🩺", query: "how is my blood test report and testosterone?" },
-                { title: "Calculate TDEE & Daily Water Needs", icon: "💧", query: "calculate my TDEE and water intake" },
-                { title: "Creatine & Protein Supplement Guide", icon: "⚡", query: "creatine monohydrate and whey protein dosage" },
-                { title: "Book Doctor Consultation", icon: "👨‍⚕️", query: "I need to consult a doctor for joint pain" },
-              ].map((chip) => (
-                <button
-                  key={chip.title}
-                  type="button"
-                  onClick={() => handleSendMessage(chip.query)}
-                  className="p-3 rounded-xl bg-surface border border-outline hover:border-primary-fixed/50 hover:bg-surface-container text-xs font-semibold text-on-surface flex items-center gap-2.5 transition-all shadow-xs group cursor-pointer"
-                >
-                  <span className="text-base group-hover:scale-110 transition-transform">{chip.icon}</span>
-                  <span className="truncate">{chip.title}</span>
-                </button>
-              ))}
             </div>
           </div>
         )}
