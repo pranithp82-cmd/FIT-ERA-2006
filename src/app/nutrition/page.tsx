@@ -96,70 +96,84 @@ export default function NutritionVoiceAgentPage() {
     ],
   };
 
-  // Initialize Speech Recognition on Mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-
-        recognition.onstart = () => {
-          setIsListening(true);
-          setSpeechTranscript("");
-        };
-
-        recognition.onresult = (event: any) => {
-          let currentTranscript = "";
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            currentTranscript += event.results[i][0].transcript;
-          }
-          setSpeechTranscript(currentTranscript);
-        };
-
-        recognition.onerror = (event: any) => {
-          console.warn("Speech recognition error:", event.error);
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
-        recognitionRef.current = recognition;
-      } else {
-        setSpeechSupported(false);
-      }
-    }
-  }, []);
-
-  // When Speech Finishes, Automatically Send Query
-  useEffect(() => {
-    if (!isListening && speechTranscript.trim()) {
-      setQuery(speechTranscript);
-      handleSearch(speechTranscript, selectedLanguage);
-    }
-  }, [isListening, speechTranscript]);
-
+  // Toggle Speech Recognition
   const toggleListening = () => {
-    if (!recognitionRef.current) {
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
       showNotification("⚠️ Voice input is not supported in this browser. Please type your query.");
       return;
     }
 
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      try {
-        recognitionRef.current.lang = SUPPORTED_LANGUAGES[selectedLanguage].voiceLangCode;
-        recognitionRef.current.start();
-      } catch (err) {
-        console.error("Error starting speech recognition:", err);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
       }
+      setIsListening(false);
+      const captured = speechTranscript.trim();
+      if (captured) {
+        setQuery(captured);
+        handleSearch(captured, selectedLanguage);
+      }
+      return;
+    }
+
+    try {
+      stopSpeaking();
+      setSpeechTranscript("");
+      setQuery("");
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = SUPPORTED_LANGUAGES[selectedLanguage]?.voiceLangCode || "en-US";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setSpeechTranscript("");
+      };
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        let final = "";
+
+        for (let i = 0; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            final += event.results[i][0].transcript + " ";
+          } else {
+            interim += event.results[i][0].transcript;
+          }
+        }
+
+        const full = (final + interim).trim();
+        setSpeechTranscript(full);
+        setQuery(full);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition notice:", event.error);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          showNotification("⚠️ Microphone blocked. Please allow microphone access in browser settings.");
+        }
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      showNotification(`🎙️ Listening in ${SUPPORTED_LANGUAGES[selectedLanguage].name}... Speak your food.`);
+    } catch (err: any) {
+      console.error("Error starting speech recognition:", err);
+      setIsListening(false);
+      showNotification("⚠️ Could not start microphone. Please try typing.");
     }
   };
 
@@ -212,16 +226,40 @@ export default function NutritionVoiceAgentPage() {
 
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = SUPPORTED_LANGUAGES[langCode]?.voiceLangCode || "en-US";
-    utterance.rate = 1.0;
+    const cleanText = text
+      .replace(/[*#_`>~-]/g, " ")
+      .replace(/•/g, ", ")
+      .replace(/🥗|⚡|💧|✅|❌|⚠️/gu, "")
+      .trim();
+
+    if (!cleanText) return;
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const targetLangCode = SUPPORTED_LANGUAGES[langCode]?.voiceLangCode || "en-US";
+    utterance.lang = targetLangCode;
+    utterance.rate = 1.05;
     utterance.pitch = 1.0;
+
+    try {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const matched = voices.find(
+          (v) => v.lang === targetLangCode || v.lang.startsWith(targetLangCode.split("-")[0])
+        );
+        if (matched) utterance.voice = matched;
+      }
+    } catch (e) {}
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn("TTS speak error:", e);
+    }
   };
 
   const stopSpeaking = () => {
